@@ -51,18 +51,20 @@ func _physics_process(delta):
 
 
 func _ready():
+	set_physics_process(false)
 	if _match.navigation == null:
 		await _match.ready
 	velocity_computed.connect(_on_velocity_computed)
 	navigation_finished.connect(_on_navigation_finished)
 	set_navigation_map(_match.navigation.get_navigation_map_rid_by_domain(domain))
-	_align_unit_position_to_navigation()
+	await _align_unit_position_to_navigation()
 	move(
 		(
 			_unit.global_position
 			+ Vector3(randf(), 0, randf()).normalized() * INITIAL_DISPERSION_FACTOR
 		)
 	)
+	set_physics_process(true)
 
 
 func move(movement_target: Vector3):
@@ -74,13 +76,26 @@ func stop():
 
 
 func _align_unit_position_to_navigation():
-	await get_tree().process_frame  # wait for navigation to be operational
+	# Runtime-baked navigation changes are synchronized on physics frames. Until a
+	# region is synchronized, closest-point queries return Vector3.ZERO, which
+	# would move every unit to the map origin.
+	var navigation_map = get_navigation_map()
+	while not _is_navigation_map_ready(navigation_map):
+		await get_tree().physics_frame
 	_unit.global_transform.origin = (
 		NavigationServer3D.map_get_closest_point(
-			get_navigation_map(), get_parent().global_transform.origin
+			navigation_map, get_parent().global_transform.origin
 		)
 		- Vector3(0, path_height_offset, 0)
 	)
+
+
+func _is_navigation_map_ready(navigation_map: RID):
+	if NavigationServer3D.map_get_iteration_id(navigation_map) == 0:
+		return false
+	return NavigationServer3D.map_get_closest_point_owner(
+		navigation_map, _unit.global_position
+	).is_valid()
 
 
 func _is_moving_actively():

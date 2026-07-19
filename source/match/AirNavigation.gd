@@ -29,7 +29,15 @@ func bake(map):
 	_reference_static_collider_shape.shape = shape
 	_reference_static_collider_shape.global_transform.origin.x = map.size.x / 2.0
 	_reference_static_collider_shape.global_transform.origin.z = map.size.y / 2.0
+	_navigation_region.bake_finished.connect(_on_bake_finished, CONNECT_ONE_SHOT)
 	_navigation_region.bake_navigation_mesh(false)
+
+
+func _on_bake_finished():
+	var region_rid = _navigation_region.get_region_rid()
+	NavigationServer3D.region_set_navigation_mesh(region_rid, null)
+	NavigationServer3D.region_set_navigation_mesh(region_rid, _navigation_region.navigation_mesh)
+	NavigationServer3D.map_force_update(navigation_map_rid)
 
 
 func _safety_checks():

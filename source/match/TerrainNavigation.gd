@@ -45,22 +45,33 @@ func bake(map):
 		Vector3.ZERO, Vector3(map.size.x, 5.0, map.size.y)
 	)
 	NavigationServer3D.parse_source_geometry_data(
-		_navigation_region.navigation_mesh, _map_geometry, get_tree().root
+		_navigation_region.navigation_mesh,
+		_map_geometry,
+		get_tree().root,
+		_on_initial_geometry_parsed
 	)
+
+
+func _on_initial_geometry_parsed():
 	for node in get_tree().get_nodes_in_group("terrain_navigation_input"):
 		node.remove_from_group("terrain_navigation_input")
 	NavigationServer3D.bake_from_source_geometry_data(
-		_navigation_region.navigation_mesh, _map_geometry
+		_navigation_region.navigation_mesh, _map_geometry, _sync_navmesh_changes
 	)
-	_sync_navmesh_changes()
 
 
 func _rebake():
 	# parse geometry other than map itself
 	var full_geometry = NavigationMeshSourceGeometryData3D.new()
 	NavigationServer3D.parse_source_geometry_data(
-		_navigation_region.navigation_mesh, full_geometry, get_tree().root
+		_navigation_region.navigation_mesh,
+		full_geometry,
+		get_tree().root,
+		_on_rebake_geometry_parsed.bind(full_geometry)
 	)
+
+
+func _on_rebake_geometry_parsed(full_geometry):
 	# add pre-parsed map geometry
 	full_geometry.merge(_map_geometry)
 
@@ -72,7 +83,10 @@ func _rebake():
 # TODO: remove whenever Godot fixes that on its side
 func _sync_navmesh_changes():
 	"""this function forces synchronization between server-level primitives and nodes"""
-	_navigation_region.navigation_mesh = _navigation_region.navigation_mesh
+	var region_rid = _navigation_region.get_region_rid()
+	NavigationServer3D.region_set_navigation_mesh(region_rid, null)
+	NavigationServer3D.region_set_navigation_mesh(region_rid, _navigation_region.navigation_mesh)
+	NavigationServer3D.map_force_update(navigation_map_rid)
 
 
 func _safety_checks():
