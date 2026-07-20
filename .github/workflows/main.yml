@@ -1,17 +1,32 @@
-name: Static checks
+name: Build
 
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
-  static-checks:
-    name: 'Static checks'
+  check:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v7
-    - uses: Scony/godot-gdscript-toolkit@f61a1f3a9f2f757813bd5176a28903502bd44959
-    - run: gdformat --check source/
-    - run: gdlint source/
+      - uses: actions/checkout@v7
+      - uses: Scony/godot-gdscript-toolkit@f61a1f3a9f2f757813bd5176a28903502bd44959
+      - run: gdformat --check source/
+      - run: gdlint source/
+
+      - name: Set up Godot
+        uses: chickensoft-games/setup-godot@v2.4.1
+        with:
+          version: 4.7.1
+          use-dotnet: false
+          include-templates: true
+
+      - name: Export project for web
+        run: ./export-web.sh
+
+      - name: Upload web export
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-prod
+          path: build/web-prod
+          if-no-files-found: error
+
