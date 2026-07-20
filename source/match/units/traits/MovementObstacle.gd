@@ -39,9 +39,11 @@ func _align_unit_position_to_navigation():
 func _is_navigation_map_ready(navigation_map: RID):
 	if NavigationServer3D.map_get_iteration_id(navigation_map) == 0:
 		return false
-	return NavigationServer3D.map_get_closest_point_owner(
-		navigation_map, _unit.global_position
-	).is_valid()
+	return (
+		NavigationServer3D
+		. map_get_closest_point_owner(navigation_map, _unit.global_position)
+		. is_valid()
+	)
 
 
 func _affect_navigation_if_needed():
