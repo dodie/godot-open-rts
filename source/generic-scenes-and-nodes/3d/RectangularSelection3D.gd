@@ -12,6 +12,8 @@ signal finished(topdown_polygon_2d)
 
 var _rect_on_screen = null
 var _time_since_last_update = 0.0  # s
+var _active_touch_indices = {}
+var _multi_touch_gesture_active = false
 
 
 func _physics_process(delta):
@@ -20,7 +22,27 @@ func _physics_process(delta):
 		_interrupt()
 
 
+func _input(event):
+	if not event is InputEventScreenTouch:
+		return
+	if event.pressed:
+		_active_touch_indices[event.index] = true
+		if _active_touch_indices.size() >= 2:
+			_multi_touch_gesture_active = true
+			_interrupt()
+	else:
+		_active_touch_indices.erase(event.index)
+		if _active_touch_indices.is_empty():
+			_multi_touch_gesture_active = false
+
+
 func _unhandled_input(event):
+	if (
+		event is InputEventMouseButton
+		and event.device == InputEvent.DEVICE_ID_EMULATION
+		and _multi_touch_gesture_active
+	):
+		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		_start()
 	if (
