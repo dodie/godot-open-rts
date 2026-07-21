@@ -11,6 +11,7 @@ enum BlueprintPositionValidity {
 const ROTATION_BY_KEY_STEP = 45.0
 const ROTATION_DEAD_ZONE_DISTANCE = 0.1
 const TOUCH_LONG_PRESS_DURATION_SECONDS = 0.6
+const TOUCH_LONG_PRESS_MOVEMENT_TOLERANCE = 20.0
 
 const MATERIALS_ROOT = "res://source/match/resources/materials/"
 const BLUEPRINT_VALID_PATH = MATERIALS_ROOT + "blueprint_valid.material.tres"
@@ -24,6 +25,7 @@ var _blueprint_rotating = false
 var _using_touch_input = false
 var _placement_touch_index = -1
 var _placement_touch_started_at_msec = 0
+var _placement_touch_start_position = Vector2.ZERO
 var _placement_touch_cancelled = false
 
 @onready var _player = get_parent()
@@ -56,15 +58,28 @@ func _input(event):
 		_using_touch_input = true
 		if not _structure_placement_started():
 			return
+		_match.handle_screen_touch_during_structure_placement(event)
 		get_viewport().set_input_as_handled()
 		if event.pressed and _placement_touch_index == -1:
 			_placement_touch_index = event.index
 			_placement_touch_started_at_msec = Time.get_ticks_msec()
+			_placement_touch_start_position = event.position
 			_placement_touch_cancelled = false
+		elif event.pressed:
+			_placement_touch_cancelled = true
 		elif not event.pressed and event.index == _placement_touch_index:
 			_placement_touch_index = -1
 			if not _placement_touch_cancelled:
 				_try_finishing_structure_placement()
+	elif event is InputEventScreenDrag and _using_touch_input and _structure_placement_started():
+		_match.handle_screen_drag_during_structure_placement(event)
+		get_viewport().set_input_as_handled()
+		if (
+			event.index == _placement_touch_index
+			and event.position.distance_to(_placement_touch_start_position)
+			> TOUCH_LONG_PRESS_MOVEMENT_TOLERANCE
+		):
+			_placement_touch_cancelled = true
 	elif event is InputEventMouseButton and event.device != InputEvent.DEVICE_ID_EMULATION:
 		_using_touch_input = false
 

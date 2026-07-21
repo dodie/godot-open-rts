@@ -96,6 +96,14 @@ func did_last_touch_end_as_tap():
 	return _last_touch_ended_as_tap
 
 
+func handle_screen_touch_during_structure_placement(event: InputEventScreenTouch):
+	_handle_screen_touch(event)
+
+
+func handle_screen_drag_during_structure_placement(event: InputEventScreenDrag):
+	_handle_screen_drag(event)
+
+
 func _handle_screen_drag(event: InputEventScreenDrag):
 	if not _touch_positions.has(event.index):
 		return
