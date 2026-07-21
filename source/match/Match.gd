@@ -28,6 +28,7 @@ var _single_touch_started_at_msec = 0
 var _single_touch_start_position = Vector2.ZERO
 var _long_press_cancelled = false
 var _long_press_triggered = false
+var _last_touch_ended_as_tap = false
 
 @onready var navigation = $Navigation
 @onready var fog_of_war = $FogOfWar
@@ -75,6 +76,7 @@ func _unhandled_input(event):
 
 func _handle_screen_touch(event: InputEventScreenTouch):
 	if event.pressed:
+		_last_touch_ended_as_tap = false
 		_touch_positions[event.index] = event.position
 		if _touch_positions.size() == 1:
 			_single_touch_started_at_msec = Time.get_ticks_msec()
@@ -86,7 +88,12 @@ func _handle_screen_touch(event: InputEventScreenTouch):
 	else:
 		_touch_positions.erase(event.index)
 		if _touch_positions.is_empty():
+			_last_touch_ended_as_tap = not _long_press_cancelled and not _long_press_triggered
 			_long_press_cancelled = true
+
+
+func did_last_touch_end_as_tap():
+	return _last_touch_ended_as_tap
 
 
 func _handle_screen_drag(event: InputEventScreenDrag):

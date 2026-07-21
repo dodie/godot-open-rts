@@ -76,10 +76,16 @@ func _update_circle_params():
 
 
 func _on_input_event(_camera, event, _click_position, _click_normal, _shape_idx):
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		if _selected and Input.is_action_pressed("shift_selecting"):
-			deselect()
+	if not event is InputEventMouseButton or event.button_index != MOUSE_BUTTON_LEFT:
+		return
+	if event.device == InputEvent.DEVICE_ID_EMULATION:
+		if event.pressed or not find_parent("Match").did_last_touch_end_as_tap():
 			return
-		if not Input.is_action_pressed("shift_selecting"):
-			MatchSignals.deselect_all_units.emit()
-		select()
+	elif not event.pressed:
+		return
+	if _selected and Input.is_action_pressed("shift_selecting"):
+		deselect()
+		return
+	if not Input.is_action_pressed("shift_selecting"):
+		MatchSignals.deselect_all_units.emit()
+	select()
