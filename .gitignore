@@ -4,3 +4,5 @@ tmp/
 *.translation
 misc/
 build/
+source/BuildInfo.gd
+source/BuildInfo.gd.uid
