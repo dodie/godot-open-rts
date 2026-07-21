@@ -9,6 +9,9 @@ const CommandCenter = preload("res://source/match/units/CommandCenter.tscn")
 const Drone = preload("res://source/match/units/Drone.tscn")
 const Worker = preload("res://source/match/units/Worker.tscn")
 
+const TOUCH_LONG_PRESS_DURATION_SECONDS = 0.6
+const TOUCH_LONG_PRESS_MOVEMENT_TOLERANCE = 20.0
+
 @export var settings: Resource = null
 
 var map:
@@ -19,6 +22,12 @@ var visible_player = null:
 var visible_players = null:
 	set = _ignore,
 	get = _get_visible_players
+
+var _touch_positions = {}
+var _single_touch_started_at_msec = 0
+var _single_touch_start_position = Vector2.ZERO
+var _long_press_cancelled = false
+var _long_press_triggered = false
 
 @onready var navigation = $Navigation
 @onready var fog_of_war = $FogOfWar
@@ -45,11 +54,93 @@ func _ready():
 	MatchSignals.match_started.emit()
 
 
+func _process(_delta):
+	_try_triggering_touch_long_press()
+
+
 func _unhandled_input(event):
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		if Input.is_action_pressed("shift_selecting"):
 			return
 		MatchSignals.deselect_all_units.emit()
+	elif event is InputEventScreenTouch:
+		_handle_screen_touch(event)
+	elif event is InputEventScreenDrag:
+		_handle_screen_drag(event)
+
+
+func _handle_screen_touch(event: InputEventScreenTouch):
+	if event.pressed:
+		_touch_positions[event.index] = event.position
+		if _touch_positions.size() == 1:
+			_single_touch_started_at_msec = Time.get_ticks_msec()
+			_single_touch_start_position = event.position
+			_long_press_cancelled = false
+			_long_press_triggered = false
+		else:
+			_long_press_cancelled = true
+	else:
+		_touch_positions.erase(event.index)
+		if _touch_positions.is_empty():
+			_long_press_cancelled = true
+
+
+func _handle_screen_drag(event: InputEventScreenDrag):
+	if not _touch_positions.has(event.index):
+		return
+	var previous_positions = _touch_positions.duplicate()
+	_touch_positions[event.index] = event.position
+	if _touch_positions.size() == 1:
+		if (
+			event.position.distance_to(_single_touch_start_position)
+			> TOUCH_LONG_PRESS_MOVEMENT_TOLERANCE
+		):
+			_long_press_cancelled = true
+		return
+	if _touch_positions.size() != 2:
+		return
+
+	_long_press_cancelled = true
+	var touch_indices = _touch_positions.keys()
+	var first_index = touch_indices[0]
+	var second_index = touch_indices[1]
+	var previous_center = (previous_positions[first_index] + previous_positions[second_index]) / 2.0
+	var current_center = (_touch_positions[first_index] + _touch_positions[second_index]) / 2.0
+	var previous_distance = previous_positions[first_index].distance_to(
+		previous_positions[second_index]
+	)
+	var current_distance = _touch_positions[first_index].distance_to(_touch_positions[second_index])
+
+	_camera.pan_from_screen_drag(previous_center, current_center)
+	if previous_distance > 0.0 and current_distance > 0.0:
+		_camera.zoom_at_screen_position(current_center, current_distance / previous_distance)
+
+
+func _try_triggering_touch_long_press():
+	if _long_press_cancelled or _long_press_triggered or _touch_positions.size() != 1:
+		return
+	if get_tree().get_nodes_in_group("selected_units").is_empty():
+		return
+	var elapsed_msec = Time.get_ticks_msec() - _single_touch_started_at_msec
+	if elapsed_msec < TOUCH_LONG_PRESS_DURATION_SECONDS * 1000.0:
+		return
+	_long_press_triggered = true
+	_emit_right_mouse_click(_single_touch_start_position)
+
+
+func _emit_right_mouse_click(position: Vector2):
+	var press_event = InputEventMouseButton.new()
+	press_event.button_index = MOUSE_BUTTON_RIGHT
+	press_event.button_mask = MOUSE_BUTTON_MASK_RIGHT
+	press_event.position = position
+	press_event.global_position = position
+	press_event.pressed = true
+	Input.parse_input_event(press_event)
+
+	var release_event = press_event.duplicate()
+	release_event.button_mask = 0
+	release_event.pressed = false
+	Input.parse_input_event(release_event)
 
 
 func _set_map(a_map):

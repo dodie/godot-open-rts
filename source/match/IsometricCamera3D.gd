@@ -62,6 +62,27 @@ func get_ray_intersection_with_plane(mouse_pos: Vector2, plane: Plane) -> Varian
 	return plane.intersects_ray(project_ray_origin(mouse_pos), project_ray_normal(mouse_pos))
 
 
+func pan_from_screen_drag(previous_position: Vector2, position: Vector2):
+	var previous_world_position = get_ray_intersection(previous_position)
+	var world_position = get_ray_intersection(position)
+	if previous_world_position == null or world_position == null:
+		return
+	global_position += previous_world_position - world_position
+	_align_position_to_bounding_planes()
+
+
+func zoom_at_screen_position(screen_position: Vector2, scale_factor: float):
+	if scale_factor <= 0.0:
+		return
+	var world_position_before_zoom = get_ray_intersection(screen_position)
+	set_size_safely(size / scale_factor)
+	var world_position_after_zoom = get_ray_intersection(screen_position)
+	if world_position_before_zoom == null or world_position_after_zoom == null:
+		return
+	global_position += world_position_before_zoom - world_position_after_zoom
+	_align_position_to_bounding_planes()
+
+
 func _try_handling_movement(delta: float) -> bool:
 	if _is_rotating():
 		return false
