@@ -60,6 +60,10 @@ func _process(_delta):
 
 func _unhandled_input(event):
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		# A screen touch may also arrive as an emulated left click. Handling that click here
+		# would deselect units before the touch has a chance to become a long-press command.
+		if event.device == InputEvent.DEVICE_ID_EMULATION:
+			return
 		if Input.is_action_pressed("shift_selecting"):
 			return
 		MatchSignals.deselect_all_units.emit()
