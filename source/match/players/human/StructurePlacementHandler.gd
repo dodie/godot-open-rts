@@ -10,6 +10,7 @@ enum BlueprintPositionValidity {
 
 const ROTATION_BY_KEY_STEP = 45.0
 const ROTATION_DEAD_ZONE_DISTANCE = 0.1
+const TOUCH_LONG_PRESS_DURATION_SECONDS = 0.6
 
 const MATERIALS_ROOT = "res://source/match/resources/materials/"
 const BLUEPRINT_VALID_PATH = MATERIALS_ROOT + "blueprint_valid.material.tres"
@@ -20,6 +21,10 @@ var _pending_structure_radius = null
 var _pending_structure_navmap_rid = null
 var _pending_structure_prototype = null
 var _blueprint_rotating = false
+var _using_touch_input = false
+var _placement_touch_index = -1
+var _placement_touch_started_at_msec = 0
+var _placement_touch_cancelled = false
 
 @onready var _player = get_parent()
 @onready var _match = find_parent("Match")
@@ -31,8 +36,43 @@ func _ready():
 	MatchSignals.place_structure.connect(_on_structure_placement_request)
 
 
+func _process(_delta):
+	if not _using_touch_input or not _structure_placement_started():
+		return
+	_set_blueprint_position_to_screen_center()
+	_update_blueprint_validity_feedback()
+	if _placement_touch_index == -1 or _placement_touch_cancelled:
+		return
+	if (
+		Time.get_ticks_msec() - _placement_touch_started_at_msec
+		>= TOUCH_LONG_PRESS_DURATION_SECONDS * 1000.0
+	):
+		_placement_touch_cancelled = true
+		_cancel_structure_placement()
+
+
+func _input(event):
+	if event is InputEventScreenTouch:
+		_using_touch_input = true
+		if not _structure_placement_started():
+			return
+		get_viewport().set_input_as_handled()
+		if event.pressed and _placement_touch_index == -1:
+			_placement_touch_index = event.index
+			_placement_touch_started_at_msec = Time.get_ticks_msec()
+			_placement_touch_cancelled = false
+		elif not event.pressed and event.index == _placement_touch_index:
+			_placement_touch_index = -1
+			if not _placement_touch_cancelled:
+				_try_finishing_structure_placement()
+	elif event is InputEventMouseButton and event.device != InputEvent.DEVICE_ID_EMULATION:
+		_using_touch_input = false
+
+
 func _unhandled_input(event):
 	if not _structure_placement_started():
+		return
+	if _using_touch_input and event is InputEventMouseButton:
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		_handle_lmb_down_event(event)
@@ -57,12 +97,16 @@ func _handle_lmb_down_event(_event):
 
 func _handle_lmb_up_event(_event):
 	get_viewport().set_input_as_handled()
+	_try_finishing_structure_placement()
+	_finish_blueprint_rotation()
+
+
+func _try_finishing_structure_placement():
 	var blueprint_position_validity = _calculate_blueprint_position_validity()
 	if blueprint_position_validity == BlueprintPositionValidity.VALID:
 		_finish_structure_placement()
 	elif blueprint_position_validity == BlueprintPositionValidity.NOT_ENOUGH_RESOURCES:
 		MatchSignals.not_enough_resources_for_construction.emit(_player)
-	_finish_blueprint_rotation()
 
 
 func _handle_rmb_event(event):
@@ -78,6 +122,10 @@ func _handle_mouse_motion_event(_event):
 		_rotate_blueprint_towards_mouse_pos()
 	else:
 		_set_blueprint_position_based_on_mouse_pos()
+	_update_blueprint_validity_feedback()
+
+
+func _update_blueprint_validity_feedback():
 	var blueprint_position_validity = _calculate_blueprint_position_validity()
 	_update_feedback_label(blueprint_position_validity)
 	_update_blueprint_color(blueprint_position_validity == BlueprintPositionValidity.VALID)
@@ -165,6 +213,9 @@ func _start_structure_placement(structure_prototype):
 		. get_navigation_map_rid_by_domain(temporary_structure_instance.movement_domain)
 	)
 	temporary_structure_instance.free()
+	if _using_touch_input:
+		_set_blueprint_position_to_screen_center()
+		_update_blueprint_validity_feedback()
 
 
 func _set_blueprint_position_based_on_mouse_pos():
@@ -174,6 +225,15 @@ func _set_blueprint_position_based_on_mouse_pos():
 		return
 	_active_blueprint_node.global_transform.origin = mouse_pos_3d
 	_feedback_label.global_transform.origin = mouse_pos_3d
+
+
+func _set_blueprint_position_to_screen_center():
+	var screen_center = Vector2(get_viewport().size) / 2.0
+	var center_pos_3d = get_viewport().get_camera_3d().get_ray_intersection(screen_center)
+	if center_pos_3d == null:
+		return
+	_active_blueprint_node.global_transform.origin = center_pos_3d
+	_feedback_label.global_transform.origin = center_pos_3d
 
 
 func _update_blueprint_color(blueprint_position_is_valid):
@@ -189,6 +249,7 @@ func _update_blueprint_color(blueprint_position_is_valid):
 
 func _cancel_structure_placement():
 	if _structure_placement_started():
+		_placement_touch_index = -1
 		_feedback_label.hide()
 		_active_blueprint_node.queue_free()
 		_active_blueprint_node = null
