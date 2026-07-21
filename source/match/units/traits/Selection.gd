@@ -80,4 +80,6 @@ func _on_input_event(_camera, event, _click_position, _click_normal, _shape_idx)
 		if _selected and Input.is_action_pressed("shift_selecting"):
 			deselect()
 			return
+		if not Input.is_action_pressed("shift_selecting"):
+			MatchSignals.deselect_all_units.emit()
 		select()
