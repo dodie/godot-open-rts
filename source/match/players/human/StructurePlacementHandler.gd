@@ -76,8 +76,10 @@ func _input(event):
 		get_viewport().set_input_as_handled()
 		if (
 			event.index == _placement_touch_index
-			and event.position.distance_to(_placement_touch_start_position)
-			> TOUCH_LONG_PRESS_MOVEMENT_TOLERANCE
+			and (
+				event.position.distance_to(_placement_touch_start_position)
+				> TOUCH_LONG_PRESS_MOVEMENT_TOLERANCE
+			)
 		):
 			_placement_touch_cancelled = true
 	elif event is InputEventMouseButton and event.device != InputEvent.DEVICE_ID_EMULATION:
