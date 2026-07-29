@@ -5,7 +5,7 @@ set -eu
 PROJECT_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 GODOT_BIN=${GODOT_BIN:-godot}
 EXPORT_DIR="$PROJECT_ROOT/build/web"
-EXPORT_PATH="$EXPORT_DIR/openrts.html"
+EXPORT_PATH="$EXPORT_DIR/index.html"
 BUILD_INFO_PATH="$PROJECT_ROOT/source/BuildInfo.gd"
 WEB_UPDATE_SCRIPT="$PROJECT_ROOT/web/update-service-worker.js"
 
