@@ -2,10 +2,22 @@ enum { VALID, COLLIDES_WITH_AGENT, NOT_NAVIGABLE }
 
 
 static func find_valid_position_radially(
-	starting_position: Vector3, radius: float, navigation_map_rid: RID, scene_tree
+	starting_position: Vector3,
+	radius: float,
+	navigation_map_rid: RID,
+	scene_tree,
+	additional_validator := Callable()
 ):
 	return find_valid_position_radially_yet_skip_starting_radius(
-		starting_position, 0.0, radius, 0.0, Vector3(0, 0, 1), true, navigation_map_rid, scene_tree
+		starting_position,
+		0.0,
+		radius,
+		0.0,
+		Vector3(0, 0, 1),
+		true,
+		navigation_map_rid,
+		scene_tree,
+		additional_validator
 	)
 
 
@@ -17,7 +29,8 @@ static func find_valid_position_radially_yet_skip_starting_radius(
 	starting_direction: Vector3,
 	shuffle: bool,
 	navigation_map_rid: RID,
-	scene_tree
+	scene_tree,
+	additional_validator := Callable()
 ):
 	var starting_position_yless = starting_position * Vector3(1, 0, 1)
 	var units = (
@@ -30,7 +43,7 @@ static func find_valid_position_radially_yet_skip_starting_radius(
 	if (
 		is_zero_approx(starting_radius)
 		and _is_agent_placement_position_valid(
-			starting_position_yless, radius, units, navigation_map_rid
+			starting_position_yless, radius, units, navigation_map_rid, additional_validator
 		)
 	):
 		return starting_position_yless
@@ -56,7 +69,7 @@ static func find_valid_position_radially_yet_skip_starting_radius(
 			radial_positions.shuffle()
 		for radial_position in radial_positions:
 			if _is_agent_placement_position_valid(
-				radial_position, radius, units, navigation_map_rid
+				radial_position, radius, units, navigation_map_rid, additional_validator
 			):
 				return radial_position
 	assert(false, "unexpected flow")
@@ -92,9 +105,11 @@ static func validate_agent_placement_position(position, radius, existing_units, 
 
 
 static func _is_agent_placement_position_valid(
-	position, radius, existing_units, navigation_map_rid
+	position, radius, existing_units, navigation_map_rid, additional_validator := Callable()
 ):
-	return (
+	if (
 		validate_agent_placement_position(position, radius, existing_units, navigation_map_rid)
-		== VALID
-	)
+		!= VALID
+	):
+		return false
+	return not additional_validator.is_valid() or additional_validator.call(position)

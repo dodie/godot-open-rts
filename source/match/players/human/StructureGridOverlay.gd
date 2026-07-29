@@ -15,7 +15,7 @@ const STRUCTURE_NAVIGATION_PADDING_CELLS := ceili(
 	Constants.Match.Terrain.Navmesh.MAX_AGENT_RADIUS / Utils.Match.StructureGrid.CELL_SIZE
 )
 
-var _map_size := Vector2.ZERO
+var _map = null
 var _navigation_map_rid := RID()
 var _structures := []
 var _empty_cells := MultiMeshInstance3D.new()
@@ -47,8 +47,8 @@ func _ready():
 	hide()
 
 
-func show_grid(map_size: Vector2, navigation_map_rid: RID, structures):
-	_map_size = map_size
+func show_grid(map, navigation_map_rid: RID, structures):
+	_map = map
 	_navigation_map_rid = navigation_map_rid
 	refresh(structures)
 	set_preview([])
@@ -56,7 +56,7 @@ func show_grid(map_size: Vector2, navigation_map_rid: RID, structures):
 
 
 func refresh(structures):
-	if _map_size == Vector2.ZERO:
+	if _map == null:
 		return
 	_structures = structures.filter(func(unit): return unit is Structure)
 	var occupied = {}
@@ -64,14 +64,14 @@ func refresh(structures):
 		for cell in Utils.Match.StructureGrid.occupied_cells(
 			structure.global_position, structure.footprint_size, structure.global_basis
 		):
-			if Utils.Match.StructureGrid.cell_is_inside_map(cell, _map_size):
+			if Utils.Match.StructureGrid.cell_is_inside_map(cell, _map.size):
 				occupied[cell] = true
 
 	var empty_transforms: Array[Transform3D] = []
 	var occupied_transforms: Array[Transform3D] = []
 	var terrain_blocked_transforms: Array[Transform3D] = []
-	var cell_count_x := floori(_map_size.x / Utils.Match.StructureGrid.CELL_SIZE)
-	var cell_count_z := floori(_map_size.y / Utils.Match.StructureGrid.CELL_SIZE)
+	var cell_count_x := floori(_map.size.x / Utils.Match.StructureGrid.CELL_SIZE)
+	var cell_count_z := floori(_map.size.y / Utils.Match.StructureGrid.CELL_SIZE)
 	for x in range(cell_count_x):
 		for z in range(cell_count_z):
 			var cell := Vector2i(x, z)
@@ -80,7 +80,9 @@ func refresh(structures):
 			)
 			if occupied.has(cell):
 				occupied_transforms.append(cell_transform)
-			elif not _cell_is_navigable(cell):
+			elif (
+				not _map.is_structure_placement_cell_buildable(cell) or not _cell_is_navigable(cell)
+			):
 				terrain_blocked_transforms.append(cell_transform)
 			else:
 				empty_transforms.append(cell_transform)
@@ -111,7 +113,7 @@ func _cell_is_navigable(cell: Vector2i) -> bool:
 func set_preview(cells):
 	var transforms: Array[Transform3D] = []
 	for cell in cells:
-		if not Utils.Match.StructureGrid.cell_is_inside_map(cell, _map_size):
+		if not Utils.Match.StructureGrid.cell_is_inside_map(cell, _map.size):
 			continue
 		transforms.append(
 			Transform3D(Basis(), Utils.Match.StructureGrid.cell_center(cell, GRID_HEIGHT + 0.002))

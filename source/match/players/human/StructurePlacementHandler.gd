@@ -1,17 +1,18 @@
 extends Node3D
 
-const Unit = preload("res://source/match/units/Unit.gd")
-const Structure = preload("res://source/match/units/Structure.gd")
-const StructureGridOverlay = preload("res://source/match/players/human/StructureGridOverlay.gd")
-const Moving = preload("res://source/match/units/actions/Moving.gd")
-
 enum BlueprintPositionValidity {
 	VALID,
 	COLLIDES_WITH_OBJECT,
+	NOT_BUILDABLE,
 	NOT_NAVIGABLE,
 	NOT_ENOUGH_RESOURCES,
 	OUT_OF_MAP,
 }
+
+const Unit = preload("res://source/match/units/Unit.gd")
+const Structure = preload("res://source/match/units/Structure.gd")
+const StructureGridOverlay = preload("res://source/match/players/human/StructureGridOverlay.gd")
+const Moving = preload("res://source/match/units/actions/Moving.gd")
 
 const ROTATION_BY_KEY_STEP = 90.0
 const ROTATION_DEAD_ZONE_DISTANCE = 0.1
@@ -183,6 +184,12 @@ func _calculate_blueprint_position_validity():
 		return BlueprintPositionValidity.NOT_ENOUGH_RESOURCES
 	if _grid_cells_collide_with_units(occupied_cells):
 		return BlueprintPositionValidity.COLLIDES_WITH_OBJECT
+	if not _match.map.is_structure_footprint_buildable(
+		_active_blueprint_node.global_position,
+		_pending_structure_footprint,
+		_active_blueprint_node.global_basis
+	):
+		return BlueprintPositionValidity.NOT_BUILDABLE
 	if not _grid_cells_are_navigable(occupied_cells):
 		return BlueprintPositionValidity.NOT_NAVIGABLE
 	return BlueprintPositionValidity.VALID
@@ -208,10 +215,7 @@ func _grid_cells_collide_with_units(occupied_cells):
 	for unit in (
 		get_tree().get_nodes_in_group("units") + get_tree().get_nodes_in_group("resource_units")
 	):
-		if (
-			unit is Unit
-			and unit.movement_domain == Constants.Match.Navigation.Domain.AIR
-		):
+		if unit is Unit and unit.movement_domain == Constants.Match.Navigation.Domain.AIR:
 			continue
 		if unit is Structure:
 			for cell in Utils.Match.StructureGrid.occupied_cells(
@@ -233,9 +237,7 @@ func _unit_overlaps_cells(unit, cells, position = null):
 		var closest_x = clamp(unit_position.x, center.x - half_cell, center.x + half_cell)
 		var closest_z = clamp(unit_position.z, center.z - half_cell, center.z + half_cell)
 		if (
-			Vector2(unit_position.x, unit_position.z).distance_to(
-				Vector2(closest_x, closest_z)
-			)
+			Vector2(unit_position.x, unit_position.z).distance_to(Vector2(closest_x, closest_z))
 			<= unit.radius
 		):
 			return true
@@ -268,15 +270,14 @@ func _move_owned_ground_units_out_of_blueprint():
 
 
 func _find_nearest_unblocking_position(unit, occupied_cells, reserved_destinations):
-	var other_units = (
-		get_tree().get_nodes_in_group("units") + get_tree().get_nodes_in_group("resource_units")
-	).filter(
+	var units = get_tree().get_nodes_in_group("units")
+	var resource_units = get_tree().get_nodes_in_group("resource_units")
+	var other_units = (units + resource_units).filter(
 		func(other):
 			return (
 				other != unit
 				and not (
-					other is Unit
-					and other.movement_domain == Constants.Match.Navigation.Domain.AIR
+					other is Unit and other.movement_domain == Constants.Match.Navigation.Domain.AIR
 				)
 			)
 	)
@@ -299,9 +300,7 @@ func _find_nearest_unblocking_position(unit, occupied_cells, reserved_destinatio
 			if reserved_destinations.any(
 				func(reserved):
 					return (
-						(candidate * Vector3(1, 0, 1)).distance_to(
-							reserved[0] * Vector3(1, 0, 1)
-						)
+						(candidate * Vector3(1, 0, 1)).distance_to(reserved[0] * Vector3(1, 0, 1))
 						<= unit.radius + reserved[1]
 					)
 			):
@@ -325,9 +324,7 @@ func _grid_cells_are_navigable(occupied_cells):
 			_pending_structure_navmap_rid, point
 		)
 		if (
-			not (point * Vector3(1, 0, 1)).is_equal_approx(
-				closest_point * Vector3(1, 0, 1)
-			)
+			not (point * Vector3(1, 0, 1)).is_equal_approx(closest_point * Vector3(1, 0, 1))
 			and not _cell_is_in_structure_navigation_padding(cell)
 		):
 			return false
@@ -355,6 +352,8 @@ func _update_feedback_label(blueprint_position_validity):
 	match blueprint_position_validity:
 		BlueprintPositionValidity.COLLIDES_WITH_OBJECT:
 			_feedback_label.text = tr("BLUEPRINT_COLLIDES_WITH_OBJECT")
+		BlueprintPositionValidity.NOT_BUILDABLE:
+			_feedback_label.text = tr("BLUEPRINT_NOT_BUILDABLE")
 		BlueprintPositionValidity.NOT_NAVIGABLE:
 			_feedback_label.text = tr("BLUEPRINT_NOT_NAVIGABLE")
 		BlueprintPositionValidity.NOT_ENOUGH_RESOURCES:
@@ -388,7 +387,7 @@ func _start_structure_placement(structure_prototype):
 	)
 	temporary_structure_instance.free()
 	_grid_overlay.show_grid(
-		_match.map.size, _pending_structure_navmap_rid, get_tree().get_nodes_in_group("units")
+		_match.map, _pending_structure_navmap_rid, get_tree().get_nodes_in_group("units")
 	)
 	if _using_touch_input:
 		_set_blueprint_position_to_screen_center()

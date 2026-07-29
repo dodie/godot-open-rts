@@ -125,14 +125,20 @@ func _construct_turret(turret_scene):
 		func(unit): return unit is CommandCenter and unit.player == _player
 	)
 	var unit_to_spawn = turret_scene.instantiate()
+	var match_node = find_parent("Match")
+	var target_basis = Utils.Match.StructureGrid.quantize_basis(
+		Transform3D(Basis(), Vector3.ZERO).looking_at(Vector3(0, 0, 1), Vector3.UP).basis
+	)
+	var buildability_validator = match_node.map.is_structure_footprint_buildable.bind(
+		unit_to_spawn.footprint_size, target_basis
+	)
 	# TODO: introduce actual algorithm which takes enemy positions into account
 	var placement_position = Utils.Match.Unit.Placement.find_valid_position_radially(
 		ccs[0].global_position,
 		unit_to_spawn.radius + Constants.Match.Units.EMPTY_SPACE_RADIUS_SURROUNDING_STRUCTURE_M,
-		find_parent("Match").navigation.get_navigation_map_rid_by_domain(
-			unit_to_spawn.movement_domain
-		),
-		get_tree()
+		match_node.navigation.get_navigation_map_rid_by_domain(unit_to_spawn.movement_domain),
+		get_tree(),
+		buildability_validator
 	)
 	var target_transform = Transform3D(Basis(), placement_position).looking_at(
 		placement_position + Vector3(0, 0, 1), Vector3.UP

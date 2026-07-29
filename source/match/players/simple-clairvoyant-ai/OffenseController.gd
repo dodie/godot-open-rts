@@ -153,13 +153,19 @@ func _construct_structure(structure_scene):
 	var reference_position_for_placement = (
 		ccs[0].global_position if not ccs.is_empty() else workers[0].global_position
 	)
+	var match_node = find_parent("Match")
+	var target_basis = Utils.Match.StructureGrid.quantize_basis(
+		Transform3D(Basis(), Vector3.ZERO).looking_at(Vector3(-1, 0, 1), Vector3.UP).basis
+	)
+	var buildability_validator = match_node.map.is_structure_footprint_buildable.bind(
+		unit_to_spawn.footprint_size, target_basis
+	)
 	var placement_position = Utils.Match.Unit.Placement.find_valid_position_radially(
 		reference_position_for_placement,
 		unit_to_spawn.radius + Constants.Match.Units.EMPTY_SPACE_RADIUS_SURROUNDING_STRUCTURE_M,
-		find_parent("Match").navigation.get_navigation_map_rid_by_domain(
-			unit_to_spawn.movement_domain
-		),
-		get_tree()
+		match_node.navigation.get_navigation_map_rid_by_domain(unit_to_spawn.movement_domain),
+		get_tree(),
+		buildability_validator
 	)
 	var target_transform = Transform3D(Basis(), placement_position).looking_at(
 		placement_position + Vector3(-1, 0, 1), Vector3.UP
