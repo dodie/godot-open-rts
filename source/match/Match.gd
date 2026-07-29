@@ -210,6 +210,8 @@ func _setup_players():
 		_create_players_from_settings()
 	for node in _players.get_children():
 		if node is Player:
+			node.resource_a = FeatureFlags.initial_player_resources["resource_a"]
+			node.resource_b = FeatureFlags.initial_player_resources["resource_b"]
 			node.add_to_group("players")
 
 
@@ -252,6 +254,11 @@ func _spawn_player_units(player, spawn_transform):
 
 
 func _setup_and_spawn_unit(unit, a_transform, player, mark_structure_under_construction = true):
+	if unit is Structure:
+		a_transform.basis = Utils.Match.StructureGrid.quantize_basis(a_transform.basis)
+		a_transform.origin = Utils.Match.StructureGrid.snap_position(
+			a_transform.origin, unit.footprint_size, a_transform.basis
+		)
 	unit.global_transform = a_transform
 	if unit is Structure and mark_structure_under_construction:
 		unit.mark_as_under_construction()

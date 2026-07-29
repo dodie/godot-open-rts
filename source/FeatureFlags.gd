@@ -5,6 +5,7 @@ extends Node
 @export var save_user_files_in_tmp = false
 
 @export_group("Match")
+@export var initial_player_resources = {"resource_a": 20, "resource_b": 20}
 @export var allow_resources_deficit_spending = false
 @export var handle_match_end = true
 @export var show_minimap = true

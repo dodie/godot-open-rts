@@ -6,6 +6,9 @@ const UNDER_CONSTRUCTION_MATERIAL = preload(
 	"res://source/match/resources/materials/structure_under_construction.material.tres"
 )
 
+@export var footprint_size := Vector2i.ONE
+@export var placement_rotation_degrees := 0.0
+
 var _construction_progress = 1.0
 
 @onready var production_queue = find_child("ProductionQueue"):

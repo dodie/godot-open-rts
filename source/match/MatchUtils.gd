@@ -4,6 +4,7 @@ class Unit:
 
 
 const Resources = preload("res://source/match/utils/ResourceUtils.gd")
+const StructureGrid = preload("res://source/match/utils/StructureGridUtils.gd")
 
 
 static func traverse_node_tree_and_replace_materials_matching_albedo(
