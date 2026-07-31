@@ -1,0 +1,79 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://source/match/units/projectiles/OneShotParticles.gd" id="1"]
+
+[sub_resource type="StandardMaterial3D" id="FlashMaterial"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+billboard_mode = 1
+
+[sub_resource type="Gradient" id="FlashGradient"]
+offsets = PackedFloat32Array(0, 0.35, 1)
+colors = PackedColorArray(1, 0.95, 0.55, 1, 1, 0.32, 0.03, 0.9, 0.45, 0.03, 0, 0)
+
+[sub_resource type="GradientTexture1D" id="FlashGradientTexture"]
+gradient = SubResource("FlashGradient")
+
+[sub_resource type="Curve" id="FlashScaleCurve"]
+_data = [Vector2(0, 0.35), 0.0, 3.6, 0, 0, Vector2(0.25, 1), 1.2, 1.2, 0, 0, Vector2(1, 0), -1.35, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="FlashScaleTexture"]
+curve = SubResource("FlashScaleCurve")
+
+[sub_resource type="ParticleProcessMaterial" id="FlashParticles"]
+direction = Vector3(0, 0, -1)
+spread = 18.0
+initial_velocity_min = 2.5
+initial_velocity_max = 4.5
+damping_min = 25.0
+damping_max = 35.0
+scale_min = 0.32
+scale_max = 0.52
+scale_curve = SubResource("FlashScaleTexture")
+color_ramp = SubResource("FlashGradientTexture")
+
+[sub_resource type="QuadMesh" id="FlashQuad"]
+size = Vector2(0.55, 0.55)
+
+[sub_resource type="ParticleProcessMaterial" id="SparkParticles"]
+direction = Vector3(0, 0, -1)
+spread = 28.0
+initial_velocity_min = 4.0
+initial_velocity_max = 7.0
+gravity = Vector3(0, -2, 0)
+damping_min = 8.0
+damping_max = 12.0
+scale_min = 0.04
+scale_max = 0.09
+color_ramp = SubResource("FlashGradientTexture")
+
+[sub_resource type="QuadMesh" id="SparkQuad"]
+size = Vector2(0.12, 0.12)
+
+[node name="CannonMuzzleFlash" type="Node3D"]
+script = ExtResource("1")
+
+[node name="Flash" type="GPUParticles3D" parent="."]
+material_override = SubResource("FlashMaterial")
+emitting = false
+amount = 14
+lifetime = 0.14
+one_shot = true
+explosiveness = 1.0
+fixed_fps = 60
+process_material = SubResource("FlashParticles")
+draw_pass_1 = SubResource("FlashQuad")
+
+[node name="Sparks" type="GPUParticles3D" parent="."]
+material_override = SubResource("FlashMaterial")
+emitting = false
+amount = 10
+lifetime = 0.18
+one_shot = true
+explosiveness = 1.0
+fixed_fps = 60
+process_material = SubResource("SparkParticles")
+draw_pass_1 = SubResource("SparkQuad")

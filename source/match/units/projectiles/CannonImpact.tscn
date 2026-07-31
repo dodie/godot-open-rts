@@ -1,0 +1,91 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://source/match/units/projectiles/OneShotParticles.gd" id="1"]
+
+[sub_resource type="StandardMaterial3D" id="FireMaterial"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+billboard_mode = 1
+
+[sub_resource type="Gradient" id="FireGradient"]
+offsets = PackedFloat32Array(0, 0.28, 0.72, 1)
+colors = PackedColorArray(1, 1, 0.62, 1, 1, 0.3, 0.015, 0.95, 0.7, 0.05, 0.005, 0.55, 0.18, 0.01, 0, 0)
+
+[sub_resource type="GradientTexture1D" id="FireGradientTexture"]
+gradient = SubResource("FireGradient")
+
+[sub_resource type="Curve" id="BurstScaleCurve"]
+_data = [Vector2(0, 0.2), 0.0, 4.8, 0, 0, Vector2(0.2, 1), 1.0, 1.0, 0, 0, Vector2(1, 0.15), -1.1, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="BurstScaleTexture"]
+curve = SubResource("BurstScaleCurve")
+
+[sub_resource type="ParticleProcessMaterial" id="FireParticles"]
+emission_shape = 1
+emission_sphere_radius = 0.18
+direction = Vector3(0, 1, 0)
+spread = 75.0
+initial_velocity_min = 1.4
+initial_velocity_max = 3.2
+gravity = Vector3(0, 1.5, 0)
+damping_min = 8.0
+damping_max = 13.0
+scale_min = 0.45
+scale_max = 0.8
+scale_curve = SubResource("BurstScaleTexture")
+color_ramp = SubResource("FireGradientTexture")
+
+[sub_resource type="QuadMesh" id="FireQuad"]
+size = Vector2(0.75, 0.75)
+
+[sub_resource type="Gradient" id="DebrisGradient"]
+offsets = PackedFloat32Array(0, 0.55, 1)
+colors = PackedColorArray(1, 0.62, 0.08, 1, 0.55, 0.12, 0.015, 0.9, 0.08, 0.025, 0.01, 0)
+
+[sub_resource type="GradientTexture1D" id="DebrisGradientTexture"]
+gradient = SubResource("DebrisGradient")
+
+[sub_resource type="ParticleProcessMaterial" id="DebrisParticles"]
+emission_shape = 1
+emission_sphere_radius = 0.12
+direction = Vector3(0, 1, 0)
+spread = 70.0
+initial_velocity_min = 3.5
+initial_velocity_max = 6.5
+gravity = Vector3(0, -12, 0)
+damping_min = 1.0
+damping_max = 3.0
+scale_min = 0.06
+scale_max = 0.13
+color_ramp = SubResource("DebrisGradientTexture")
+
+[sub_resource type="QuadMesh" id="DebrisQuad"]
+size = Vector2(0.15, 0.15)
+
+[node name="CannonImpact" type="Node3D"]
+script = ExtResource("1")
+
+[node name="Fire" type="GPUParticles3D" parent="."]
+material_override = SubResource("FireMaterial")
+emitting = false
+amount = 28
+lifetime = 0.28
+one_shot = true
+explosiveness = 1.0
+fixed_fps = 60
+process_material = SubResource("FireParticles")
+draw_pass_1 = SubResource("FireQuad")
+
+[node name="Debris" type="GPUParticles3D" parent="."]
+material_override = SubResource("FireMaterial")
+emitting = false
+amount = 22
+lifetime = 0.38
+one_shot = true
+explosiveness = 1.0
+fixed_fps = 60
+process_material = SubResource("DebrisParticles")
+draw_pass_1 = SubResource("DebrisQuad")

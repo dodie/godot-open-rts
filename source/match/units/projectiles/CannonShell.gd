@@ -1,31 +1,32 @@
 extends Node3D
 
+const MuzzleFlash = preload("res://source/match/units/projectiles/CannonMuzzleFlash.tscn")
+const Impact = preload("res://source/match/units/projectiles/CannonImpact.tscn")
+
 var target_unit = null
 
 @onready var _unit = get_parent()
-@onready var _unit_particles = find_child("OriginParticles")
-@onready var _timer = find_child("Timer")
 
 
 func _ready():
 	assert(target_unit != null, "target unit was not provided")
-	_unit_particles.visible = _unit.visible
-	_setup_unit_particles()
-	_setup_timer()
+	_spawn_effect(MuzzleFlash, _get_projectile_origin(), _unit.visible)
+	_spawn_effect(Impact, Transform3D(Basis(), _get_impact_position()), target_unit.visible)
 	target_unit.hp -= _unit.attack_damage
+	queue_free()
 
 
-func _setup_timer():
-	_timer.timeout.connect(queue_free)
-	_timer.start(_unit_particles.lifetime)
+func _get_projectile_origin() -> Transform3D:
+	var projectile_origin = _unit.find_child("ProjectileOrigin")
+	return _unit.global_transform if projectile_origin == null else projectile_origin.global_transform
 
 
-func _setup_unit_particles():
-	await get_tree().physics_frame  # wait for rotation to kick in if remote transform is used
-	var a_global_transform = (
-		_unit.global_transform
-		if _unit.find_child("ProjectileOrigin") == null
-		else _unit.find_child("ProjectileOrigin").global_transform
-	)
-	_unit_particles.global_transform = a_global_transform
-	_unit_particles.emitting = true
+func _get_impact_position() -> Vector3:
+	return target_unit.global_position + Vector3.UP * 0.35
+
+
+func _spawn_effect(scene: PackedScene, effect_transform: Transform3D, is_visible: bool):
+	var effect = scene.instantiate()
+	effect.visible = is_visible
+	get_tree().current_scene.add_child(effect)
+	effect.global_transform = effect_transform
