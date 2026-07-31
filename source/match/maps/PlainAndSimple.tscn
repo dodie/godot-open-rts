@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=3 uid="uid://cbe63rdjw7y4p"]
+[gd_scene load_steps=8 format=3 uid="uid://cbe63rdjw7y4p"]
 
 [ext_resource type="PackedScene" uid="uid://b7c1crf36x1li" path="res://source/match/Map.tscn" id="1_sqrvi"]
 [ext_resource type="Material" uid="uid://co8vfcoqqs5i8" path="res://source/match/resources/materials/terrain.material.tres" id="2_sguro"]
 [ext_resource type="PackedScene" uid="uid://bf3jjdafqvh0w" path="res://source/match/units/non-player/ResourceA.tscn" id="3_3gxbc"]
 [ext_resource type="PackedScene" uid="uid://bufgjfa3ne3uk" path="res://source/match/units/non-player/ResourceB.tscn" id="4_4hhxt"]
 [ext_resource type="PackedScene" path="res://source/match/decorations/UnbuildableGroundPatch.tscn" id="5_unbuildable"]
+[ext_resource type="Script" path="res://source/match/decorations/UnbuildableGroundRegion.gd" id="6_unbuildable_region"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_frqq2"]
 resource_local_to_scene = true
@@ -17,9 +18,20 @@ center_offset = Vector3(25, 0, 25)
 [node name="Terrain" parent="Geometry" index="1"]
 mesh = SubResource("PlaneMesh_frqq2")
 
-[node name="UnbuildableGroundPatch" parent="Decorations" index="0" instance=ExtResource("5_unbuildable")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0, 25)
-footprint_size = Vector2i(10, 6)
+[node name="UnbuildableGroundRegion" type="Node3D" parent="Decorations" index="0"]
+script = ExtResource("6_unbuildable_region")
+
+[node name="UnbuildableGroundPatchWide" parent="Decorations/UnbuildableGroundRegion" index="0" instance=ExtResource("5_unbuildable")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.5, 0, 24)
+footprint_size = Vector2i(7, 4)
+
+[node name="UnbuildableGroundPatchTall" parent="Decorations/UnbuildableGroundRegion" index="1" instance=ExtResource("5_unbuildable")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.5, 0, 27.5)
+footprint_size = Vector2i(3, 7)
+
+[node name="UnbuildableGroundPatchSmall" parent="Decorations/UnbuildableGroundRegion" index="2" instance=ExtResource("5_unbuildable")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 25, 0, 28)
+footprint_size = Vector2i(4, 2)
 
 [node name="Marker3D" type="Marker3D" parent="SpawnPoints" index="0"]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 10, 0, 7)

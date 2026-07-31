@@ -1,15 +1,16 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://source/match/decorations/UnbuildableGroundPatch.gd" id="1_script"]
+[ext_resource type="Shader" path="res://source/shaders/3d/unbuildable_ground_patch.gdshader" id="2_shader"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_patch"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_patch"]
 resource_local_to_scene = true
-albedo_color = Color(0.24, 0.14, 0.08, 1)
-roughness = 1.0
+render_priority = -1
+shader = ExtResource("2_shader")
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_patch"]
 resource_local_to_scene = true
-material = SubResource("StandardMaterial3D_patch")
+material = SubResource("ShaderMaterial_patch")
 size = Vector2(1, 1)
 
 [node name="UnbuildableGroundPatch" type="Node3D" groups=["structure_placement_blockers"]]
