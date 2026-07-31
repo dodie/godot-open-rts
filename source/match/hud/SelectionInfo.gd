@@ -25,8 +25,8 @@ const UNIT_NAMES = {
 }
 
 var _observed_unit = null
+var _multiple_unit_health_connections = {}
 
-@onready var _empty_state = %EmptyState
 @onready var _single_unit = %SingleUnit
 @onready var _unit_icon = %UnitIcon
 @onready var _unit_name = %UnitName
@@ -34,7 +34,6 @@ var _observed_unit = null
 @onready var _health_value = %HealthValue
 @onready var _damage_value = %DamageValue
 @onready var _multiple_units = %MultipleUnits
-@onready var _selection_count = %SelectionCount
 @onready var _unit_grid = %UnitGrid
 
 
@@ -51,16 +50,13 @@ func _on_selection_changed(_unit):
 
 func _refresh():
 	_stop_observing_unit()
-	_empty_state.hide()
 	_single_unit.hide()
 	_multiple_units.hide()
 
 	var selected_units = get_tree().get_nodes_in_group("selected_units")
-	if selected_units.is_empty():
-		_empty_state.show()
-	elif selected_units.size() == 1:
+	if selected_units.size() == 1:
 		_show_single_unit(selected_units[0])
-	else:
+	elif selected_units.size() > 1:
 		_show_multiple_units(selected_units)
 
 
@@ -88,8 +84,11 @@ func _show_multiple_units(units):
 	for child in _unit_grid.get_children():
 		child.queue_free()
 
-	_selection_count.text = "%d units selected" % units.size()
 	for unit in units:
+		var unit_tile = VBoxContainer.new()
+		unit_tile.custom_minimum_size = Vector2(42, 48)
+		unit_tile.add_theme_constant_override("separation", 2)
+
 		var icon = TextureRect.new()
 		icon.custom_minimum_size = Vector2(42, 42)
 		icon.texture = UNIT_ICONS.get(unit.type)
@@ -97,7 +96,25 @@ func _show_multiple_units(units):
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.tooltip_text = UNIT_NAMES.get(unit.type, unit.type)
 		icon.mouse_filter = Control.MOUSE_FILTER_PASS
-		_unit_grid.add_child(icon)
+		unit_tile.add_child(icon)
+
+		var health = ProgressBar.new()
+		health.custom_minimum_size = Vector2(42, 5)
+		health.max_value = max(1, unit.hp_max)
+		health.value = unit.hp
+		health.show_percentage = false
+		health.visible = unit.hp < unit.hp_max
+		unit_tile.add_child(health)
+
+		var update_health = func():
+			if not is_instance_valid(unit):
+				return
+			health.max_value = max(1, unit.hp_max)
+			health.value = unit.hp
+			health.visible = unit.hp < unit.hp_max
+		unit.hp_changed.connect(update_health)
+		_multiple_unit_health_connections[unit] = update_health
+		_unit_grid.add_child(unit_tile)
 	_multiple_units.show()
 
 
@@ -108,3 +125,8 @@ func _stop_observing_unit():
 	):
 		_observed_unit.hp_changed.disconnect(_update_single_unit_health)
 	_observed_unit = null
+	for unit in _multiple_unit_health_connections:
+		var connection = _multiple_unit_health_connections[unit]
+		if is_instance_valid(unit) and unit.hp_changed.is_connected(connection):
+			unit.hp_changed.disconnect(connection)
+	_multiple_unit_health_connections.clear()
