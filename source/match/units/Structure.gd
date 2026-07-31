@@ -5,6 +5,8 @@ signal constructed
 const UNDER_CONSTRUCTION_MATERIAL = preload(
 	"res://source/match/resources/materials/structure_under_construction.material.tres"
 )
+const BUILDING_DEATH_EXPLOSION_SCALE = 3.0
+const BUILDING_DEATH_EXPLOSION_PARTICLE_MULTIPLIER = 2.5
 
 @export var footprint_size := Vector2i.ONE
 @export var placement_rotation_degrees := 0.0
@@ -54,6 +56,14 @@ func is_constructed():
 
 func is_under_construction():
 	return not is_constructed()
+
+
+func _get_death_explosion_scale() -> float:
+	return BUILDING_DEATH_EXPLOSION_SCALE
+
+
+func _get_death_explosion_particle_multiplier() -> float:
+	return BUILDING_DEATH_EXPLOSION_PARTICLE_MULTIPLIER
 
 
 func _finish_construction():

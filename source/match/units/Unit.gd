@@ -8,6 +8,10 @@ signal action_updated
 
 const MATERIAL_ALBEDO_TO_REPLACE = Color(0.99, 0.81, 0.48)
 const MATERIAL_ALBEDO_TO_REPLACE_EPSILON = 0.05
+const DeathExplosion = preload("res://source/match/units/projectiles/CannonImpact.tscn")
+
+const DEATH_EXPLOSION_SCALE = 1.65
+const DEATH_EXPLOSION_PARTICLE_MULTIPLIER = 1.5
 
 var hp = null:
 	set = _set_hp
@@ -159,8 +163,28 @@ func _safety_checks():
 
 
 func _handle_unit_death():
+	_spawn_death_explosion()
 	tree_exited.connect(func(): MatchSignals.unit_died.emit(self))
 	queue_free()
+
+
+func _spawn_death_explosion():
+	var explosion_scale = _get_death_explosion_scale()
+	var explosion = DeathExplosion.instantiate()
+	explosion.visible = visible
+	explosion.scale = Vector3.ONE * explosion_scale
+	for particles in explosion.find_children("*", "GPUParticles3D", true, false):
+		particles.amount = roundi(particles.amount * _get_death_explosion_particle_multiplier())
+	get_tree().current_scene.add_child(explosion)
+	explosion.global_position = global_position + Vector3.UP * 0.35 * explosion_scale
+
+
+func _get_death_explosion_scale() -> float:
+	return DEATH_EXPLOSION_SCALE
+
+
+func _get_death_explosion_particle_multiplier() -> float:
+	return DEATH_EXPLOSION_PARTICLE_MULTIPLIER
 
 
 func _setup_default_properties_from_constants():
