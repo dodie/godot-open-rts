@@ -1,4 +1,4 @@
-[gd_scene load_steps=44 format=3 uid="uid://camns8fqod8d4"]
+[gd_scene load_steps=45 format=3 uid="uid://camns8fqod8d4"]
 
 [ext_resource type="Script" path="res://source/match/Match.gd" id="1_1555u"]
 [ext_resource type="Script" path="res://source/match/IsometricCamera3D.gd" id="1_qb2ry"]
@@ -18,6 +18,7 @@
 [ext_resource type="Script" path="res://source/match/AirNavigation.gd" id="16_ravsv"]
 [ext_resource type="Script" path="res://source/match/hud/Resources.gd" id="16_vjwpn"]
 [ext_resource type="Script" path="res://source/match/hud/Minimap.gd" id="17_0bfte"]
+[ext_resource type="PackedScene" path="res://source/match/hud/SelectionInfo.tscn" id="18_selection"]
 [ext_resource type="Script" path="res://source/match/TerrainNavigation.gd" id="17_6fprk"]
 [ext_resource type="Shader" path="res://source/shaders/2d/white_transparent.gdshader" id="19_m1b2v"]
 [ext_resource type="PackedScene" uid="uid://c0uxy26e4qs4w" path="res://source/match/handlers/MouseClickAnimationsHandler.tscn" id="22_438pb"]
@@ -347,6 +348,22 @@ antialiased = true
 layout_mode = 2
 texture = SubResource("ViewportTexture_8q44e")
 stretch_mode = 5
+
+[node name="SelectionInfoMargin" type="MarginContainer" parent="HUD"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -210.0
+offset_right = 200.0
+offset_bottom = -5.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="SelectionInfo" parent="HUD/SelectionInfoMargin" instance=ExtResource("18_selection")]
+layout_mode = 2
 
 [node name="MarginContainer2" type="MarginContainer" parent="HUD"]
 offset_right = 40.0
