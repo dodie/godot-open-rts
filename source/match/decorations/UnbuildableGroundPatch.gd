@@ -32,7 +32,10 @@ const VISUAL_MARGIN := 0.40
 
 
 func _ready():
-	set_notify_transform(true)
+	# Transform notifications keep joined visuals current while patches are edited.
+	# Runtime patches are static, and notifications while resolving a dirty global
+	# transform can otherwise keep scheduling region rebuilds during scene startup.
+	set_notify_transform(Engine.is_editor_hint())
 	_update_visual()
 
 

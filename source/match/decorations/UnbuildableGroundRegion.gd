@@ -2,6 +2,7 @@
 extends Node3D
 
 var _join_update_queued := false
+var _rebuilding_rounded_joins := false
 
 
 func _ready():
@@ -9,7 +10,7 @@ func _ready():
 
 
 func _queue_join_update():
-	if _join_update_queued or not is_inside_tree():
+	if _join_update_queued or _rebuilding_rounded_joins or not is_inside_tree():
 		return
 	_join_update_queued = true
 	_rebuild_rounded_joins.call_deferred()
@@ -17,8 +18,10 @@ func _queue_join_update():
 
 func _rebuild_rounded_joins():
 	_join_update_queued = false
+	_rebuilding_rounded_joins = true
 	var patches := _get_patches()
 	if patches.is_empty():
+		_rebuilding_rounded_joins = false
 		return
 
 	var blocked_cells := {}
@@ -54,6 +57,7 @@ func _rebuild_rounded_joins():
 
 	for patch in patches:
 		patch._set_visual_cutouts(cutouts_by_patch[patch])
+	_rebuilding_rounded_joins = false
 
 
 func _get_patches() -> Array[Node]:
