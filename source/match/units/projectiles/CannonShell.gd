@@ -18,7 +18,9 @@ func _ready():
 
 func _get_projectile_origin() -> Transform3D:
 	var projectile_origin = _unit.find_child("ProjectileOrigin")
-	return _unit.global_transform if projectile_origin == null else projectile_origin.global_transform
+	return (
+		_unit.global_transform if projectile_origin == null else projectile_origin.global_transform
+	)
 
 
 func _get_impact_position() -> Vector3:
