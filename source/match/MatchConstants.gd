@@ -80,12 +80,18 @@ class Units:
 			"resource_a": 3,
 			"resource_b": 1,
 		},
+		"res://source/match/units/Launcher.tscn":
+		{
+			"resource_a": 3,
+			"resource_b": 1,
+		},
 	}
 	const PRODUCTION_TIMES = {
 		"res://source/match/units/Worker.tscn": 3.0,
 		"res://source/match/units/Helicopter.tscn": 6.0,
 		"res://source/match/units/Drone.tscn": 3.0,
 		"res://source/match/units/Tank.tscn": 6.0,
+		"res://source/match/units/Launcher.tscn": 6.0,
 	}
 	const PRODUCTION_QUEUE_LIMIT = 5
 	const STRUCTURE_BLUEPRINTS = {
@@ -161,6 +167,16 @@ class Units:
 			"attack_range": 5.0,
 			"attack_domains": [Navigation.Domain.TERRAIN],
 		},
+		"res://source/match/units/Launcher.tscn":
+		{
+			"sight_range": 8.0,
+			"hp": 10,
+			"hp_max": 10,
+			"attack_damage": 2,
+			"attack_interval": 0.75,
+			"attack_range": 5.0,
+			"attack_domains": [Navigation.Domain.TERRAIN],
+		},
 		"res://source/match/units/CommandCenter.tscn":
 		{
 			"sight_range": 10.0,
@@ -204,6 +220,8 @@ class Units:
 		"res://source/match/units/Helicopter.tscn":
 		"res://source/match/units/projectiles/Rocket.tscn",
 		"res://source/match/units/Tank.tscn":
+		"res://source/match/units/projectiles/CannonShell.tscn",
+		"res://source/match/units/Launcher.tscn":
 		"res://source/match/units/projectiles/CannonShell.tscn",
 		"res://source/match/units/AntiGroundTurret.tscn":
 		"res://source/match/units/projectiles/CannonShell.tscn",

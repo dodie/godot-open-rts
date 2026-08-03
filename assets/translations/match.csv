@@ -20,6 +20,8 @@ DRONE,Scout drone,Dron zwiadoczy
 DRONE_DESCRIPTION,performs scouting,wykonuje loty zwiadowcze
 TANK,Tank,Czołg
 TANK_DESCRIPTION,fights ground targets,zwalcza cele naziemne
+LAUNCHER,Launcher,Wyrzutnia
+LAUNCHER_DESCRIPTION,fights ground targets,zwalcza cele naziemne
 AG_TURRET,Anti-ground turret,Wieżyczka przeciwpancerna
 AG_TURRET_DESCRIPTION,fights ground targets,zwalcza cele naziemne
 AA_TURRET,Anti-air turret,Wieżyczka przeciwlotnicza
