@@ -5,10 +5,6 @@ const Structure = preload("res://source/match/units/Structure.gd")
 const Player = preload("res://source/match/players/Player.gd")
 const Human = preload("res://source/match/players/human/Human.gd")
 
-const CommandCenter = preload("res://source/match/units/CommandCenter.tscn")
-const Drone = preload("res://source/match/units/Drone.tscn")
-const Worker = preload("res://source/match/units/Worker.tscn")
-
 const TOUCH_LONG_PRESS_DURATION_SECONDS = 0.6
 const TOUCH_LONG_PRESS_MOVEMENT_TOLERANCE = 20.0
 
@@ -241,15 +237,17 @@ func _setup_player_units():
 
 
 func _spawn_player_units(player, spawn_transform):
-	_setup_and_spawn_unit(CommandCenter.instantiate(), spawn_transform, player, false)
 	_setup_and_spawn_unit(
-		Drone.instantiate(), spawn_transform.translated(Vector3(-2, 0, -2)), player
+		UnitCatalog.instantiate(&"command_center"), spawn_transform, player, false
 	)
 	_setup_and_spawn_unit(
-		Worker.instantiate(), spawn_transform.translated(Vector3(-3, 0, 3)), player
+		UnitCatalog.instantiate(&"drone"), spawn_transform.translated(Vector3(-2, 0, -2)), player
 	)
 	_setup_and_spawn_unit(
-		Worker.instantiate(), spawn_transform.translated(Vector3(3, 0, 3)), player
+		UnitCatalog.instantiate(&"worker"), spawn_transform.translated(Vector3(-3, 0, 3)), player
+	)
+	_setup_and_spawn_unit(
+		UnitCatalog.instantiate(&"worker"), spawn_transform.translated(Vector3(3, 0, 3)), player
 	)
 
 

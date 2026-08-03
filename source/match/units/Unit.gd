@@ -28,6 +28,7 @@ var movement_domain:
 var movement_speed:
 	get = _get_movement_speed
 var sight_range = null
+var definition = null
 var player:
 	get:
 		return get_parent()
@@ -48,10 +49,12 @@ var _action_locked = false
 
 
 func _ready():
+	if definition == null:
+		definition = UnitCatalog.get_by_scene_path(scene_file_path)
 	if not _match.is_node_ready():
 		await _match.ready
 	_setup_color()
-	_setup_default_properties_from_constants()
+	_setup_properties_from_definition()
 	assert(_safety_checks())
 
 
@@ -127,10 +130,7 @@ func _set_action(action_node):
 
 
 func _get_type():
-	var unit_script_path = get_script().resource_path
-	var unit_file_name = unit_script_path.substr(unit_script_path.rfind("/") + 1)
-	var unit_name = unit_file_name.split(".")[0]
-	return unit_name
+	return definition.id if definition != null else &""
 
 
 func _teardown_current_action():
@@ -187,12 +187,23 @@ func _get_death_explosion_particle_multiplier() -> float:
 	return DEATH_EXPLOSION_PARTICLE_MULTIPLIER
 
 
-func _setup_default_properties_from_constants():
-	var default_properties = Constants.Match.Units.DEFAULT_PROPERTIES[
-		get_script().resource_path.replace(".gd", ".tscn")
-	]
-	for property in default_properties:
-		set(property, default_properties[property])
+func _setup_properties_from_definition():
+	hp_max = definition.hp_max
+	hp = definition.hp_max
+	sight_range = definition.sight_range
+	if not definition.attack.is_empty():
+		attack_damage = definition.attack["damage"]
+		attack_interval = definition.attack["interval"]
+		attack_range = definition.attack["range"]
+		attack_domains = definition.attack["domains"]
+	var movement = find_child("Movement")
+	if movement == null:
+		movement = find_child("MovementObstacle")
+	if movement != null and not definition.movement.is_empty():
+		movement.domain = definition.movement["domain"]
+		movement.radius = definition.movement["radius"]
+		if "speed" in movement:
+			movement.speed = definition.movement["speed"]
 
 
 func _on_action_node_tree_exited(action_node):

@@ -196,9 +196,7 @@ func _calculate_blueprint_position_validity():
 
 
 func _player_has_enough_resources():
-	var construction_cost = Constants.Match.Units.CONSTRUCTION_COSTS[
-		_pending_structure_prototype.resource_path
-	]
+	var construction_cost = UnitCatalog.get_definition(_pending_structure_prototype).cost()
 	return _player.has_resources(construction_cost)
 
 
@@ -366,16 +364,14 @@ func _start_structure_placement(structure_prototype):
 	if _structure_placement_started():
 		return
 	_pending_structure_prototype = structure_prototype
-	_active_blueprint_node = (
-		load(Constants.Match.Units.STRUCTURE_BLUEPRINTS[structure_prototype.resource_path])
-		. instantiate()
-	)
+	var definition = UnitCatalog.get_definition(structure_prototype)
+	_active_blueprint_node = (load(definition.structure["blueprint_path"]).instantiate())
 	var blueprint_origin = Vector3(-999, 0, -999)
 	# Building orientation belongs to the world grid, not to the current camera angle.
 	# A player can still rotate the blueprint explicitly in 90-degree steps.
 	_active_blueprint_node.global_transform = Transform3D(Basis(), blueprint_origin)
 	add_child(_active_blueprint_node)
-	var temporary_structure_instance = _pending_structure_prototype.instantiate()
+	var temporary_structure_instance = UnitCatalog.instantiate(_pending_structure_prototype)
 	_active_blueprint_node.global_basis = Basis(
 		Vector3.UP, deg_to_rad(temporary_structure_instance.placement_rotation_degrees)
 	)
@@ -436,12 +432,10 @@ func _cancel_structure_placement():
 
 func _finish_structure_placement():
 	if _player_has_enough_resources():
-		var construction_cost = Constants.Match.Units.CONSTRUCTION_COSTS[
-			_pending_structure_prototype.resource_path
-		]
+		var construction_cost = UnitCatalog.get_definition(_pending_structure_prototype).cost()
 		_player.subtract_resources(construction_cost)
 		MatchSignals.setup_and_spawn_unit.emit(
-			_pending_structure_prototype.instantiate(),
+			UnitCatalog.instantiate(_pending_structure_prototype),
 			_active_blueprint_node.global_transform,
 			_player
 		)

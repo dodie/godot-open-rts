@@ -22,6 +22,7 @@ config/icon="res://icon.svg"
 
 FeatureFlags="*res://source/FeatureFlags.tscn"
 Constants="*res://source/Constants.gd"
+UnitCatalog="*res://source/match/units/UnitCatalog.gd"
 Globals="*res://source/Globals.gd"
 MatchSignals="*res://source/match/MatchSignals.gd"
 Signals="*res://source/Signals.gd"

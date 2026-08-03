@@ -1,6 +1,5 @@
 extends "res://source/match/units/actions/Action.gd"
 
-const Worker = preload("res://source/match/units/Worker.gd")
 const ResourceUnit = preload("res://source/match/units/non-player/ResourceUnit.gd")
 
 var _resource_unit = null
@@ -12,7 +11,7 @@ var _timer = null
 
 static func is_applicable(source_unit, target_unit):
 	return (
-		source_unit is Worker
+		source_unit.definition.has_tag(&"worker")
 		and target_unit is ResourceUnit
 		and not source_unit.is_full()
 		and Utils.Match.Unit.Movement.units_adhere(source_unit, target_unit)

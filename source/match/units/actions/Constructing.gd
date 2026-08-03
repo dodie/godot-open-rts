@@ -1,6 +1,5 @@
 extends "res://source/match/units/actions/Action.gd"
 
-const Worker = preload("res://source/match/units/Worker.gd")
 const Structure = preload("res://source/match/units/Structure.gd")
 const MovingToUnit = preload("res://source/match/units/actions/MovingToUnit.gd")
 const ConstructingWhileInRange = preload(
@@ -15,7 +14,7 @@ var _sub_action = null
 
 static func is_applicable(source_unit, target_unit):
 	return (
-		source_unit is Worker
+		source_unit.definition.has_tag(&"worker")
 		and target_unit is Structure
 		and not target_unit.is_constructed()
 		and source_unit.player == target_unit.player

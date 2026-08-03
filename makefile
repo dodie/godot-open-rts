@@ -1,4 +1,4 @@
-all: lint format-check shaders-format-check
+all: lint format-check shaders-format-check test
 version = "0.9.0"
 
 format-check:
@@ -15,6 +15,9 @@ cc:
 
 todo:
 	ack ' todo' -i source/
+
+test:
+	godot4 --headless --path . --script tests/UnitCatalogTest.gd
 
 release-linux:
 	godot4 --export-release "Linux/X11" "build/Open_RTS_$(version)_linux64.bin"

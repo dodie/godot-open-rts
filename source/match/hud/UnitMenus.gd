@@ -1,15 +1,7 @@
 extends PanelContainer
 
-const VehicleFactory = preload("res://source/match/units/VehicleFactory.gd")
-const AircraftFactory = preload("res://source/match/units/AircraftFactory.gd")
-const CommandCenter = preload("res://source/match/units/CommandCenter.gd")
-const Worker = preload("res://source/match/units/Worker.gd")
-
 @onready var _generic_menu = find_child("GenericMenu")
-@onready var _command_center_menu = find_child("CommandCenterMenu")
-@onready var _vehicle_factory_menu = find_child("VehicleFactoryMenu")
-@onready var _aircraft_factory_menu = find_child("AircraftFactoryMenu")
-@onready var _worker_menu = find_child("WorkerMenu")
+@onready var _build_menu = find_child("BuildMenu")
 
 
 func _ready():
@@ -29,42 +21,23 @@ func _reset_menus():
 
 func _hide_all_menus():
 	_generic_menu.hide()
-	_command_center_menu.hide()
-	_vehicle_factory_menu.hide()
-	_aircraft_factory_menu.hide()
-	_worker_menu.hide()
+	_build_menu.hide()
 
 
 func _try_showing_any_menu():
 	var selected_controlled_units = get_tree().get_nodes_in_group("selected_units").filter(
 		func(unit): return unit.is_in_group("controlled_units")
 	)
-	if (
-		selected_controlled_units.size() == 1
-		and selected_controlled_units[0] is CommandCenter
-		and selected_controlled_units[0].is_constructed()
-	):
-		_command_center_menu.unit = selected_controlled_units[0]
-		_command_center_menu.show()
-		return true
-	if (
-		selected_controlled_units.size() == 1
-		and selected_controlled_units[0] is VehicleFactory
-		and selected_controlled_units[0].is_constructed()
-	):
-		_vehicle_factory_menu.unit = selected_controlled_units[0]
-		_vehicle_factory_menu.show()
-		return true
-	if (
-		selected_controlled_units.size() == 1
-		and selected_controlled_units[0] is AircraftFactory
-		and selected_controlled_units[0].is_constructed()
-	):
-		_aircraft_factory_menu.unit = selected_controlled_units[0]
-		_aircraft_factory_menu.show()
-		return true
-	if selected_controlled_units.size() == 1 and selected_controlled_units[0] is Worker:
-		_worker_menu.show()
+	if selected_controlled_units.size() == 1:
+		var selected_unit = selected_controlled_units[0]
+		var can_build = not UnitCatalog.get_products(selected_unit.definition.id).is_empty()
+		if "is_constructed" in selected_unit and not selected_unit.is_constructed():
+			can_build = false
+		if can_build:
+			_build_menu.unit = selected_unit
+			_build_menu.show()
+			if not selected_unit.definition.has_tag(&"worker"):
+				return true
 	if selected_controlled_units.size() > 0:
 		_generic_menu.units = selected_controlled_units
 		_generic_menu.show()

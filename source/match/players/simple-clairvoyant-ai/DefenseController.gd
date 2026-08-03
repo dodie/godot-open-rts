@@ -2,13 +2,6 @@ extends Node
 
 signal resources_required(resources, metadata)
 
-const Worker = preload("res://source/match/units/Worker.gd")
-const CommandCenter = preload("res://source/match/units/CommandCenter.gd")
-const AGTurret = preload("res://source/match/units/AntiGroundTurret.gd")
-const AGTurretScene = preload("res://source/match/units/AntiGroundTurret.tscn")
-const AATurret = preload("res://source/match/units/AntiAirTurret.gd")
-const AATurretScene = preload("res://source/match/units/AntiAirTurret.tscn")
-
 const REFRESH_INTERVAL_S = 1.0 / 60.0 * 30.0
 
 var _player = null
@@ -29,29 +22,29 @@ func setup(player):
 
 func provision(resources, metadata):
 	var workers = get_tree().get_nodes_in_group("units").filter(
-		func(unit): return unit is Worker and unit.player == _player
+		func(unit): return unit.definition.has_tag(&"worker") and unit.player == _player
 	)
 	var ccs = get_tree().get_nodes_in_group("units").filter(
-		func(unit): return unit is CommandCenter and unit.player == _player
+		func(unit): return unit.definition.has_tag(&"command_center") and unit.player == _player
 	)
 	if metadata == "ag_turret":
 		assert(
-			resources == Constants.Match.Units.CONSTRUCTION_COSTS[AGTurretScene.resource_path],
+			resources == UnitCatalog.get_definition(&"anti_ground_turret").cost(),
 			"unexpected amount of resources"
 		)
 		_number_of_pending_ag_turret_resource_requests -= 1
 		if workers.is_empty() or ccs.is_empty():
 			return
-		_construct_turret(AGTurretScene)
+		_construct_turret(&"anti_ground_turret")
 	elif metadata == "aa_turret":
 		assert(
-			resources == Constants.Match.Units.CONSTRUCTION_COSTS[AATurretScene.resource_path],
+			resources == UnitCatalog.get_definition(&"anti_air_turret").cost(),
 			"unexpected amount of resources"
 		)
 		_number_of_pending_aa_turret_resource_requests -= 1
 		if workers.is_empty() or ccs.is_empty():
 			return
-		_construct_turret(AATurretScene)
+		_construct_turret(&"anti_air_turret")
 	else:
 		assert(false, "unexpected flow")
 
@@ -65,7 +58,14 @@ func _setup_refresh_timer():
 
 func _attach_current_turrets():
 	var turrets = get_tree().get_nodes_in_group("units").filter(
-		func(unit): return (unit is AGTurret or unit is AATurret) and unit.player == _player
+		func(unit):
+			return (
+				unit.player == _player
+				and (
+					unit.definition.has_tag(&"defense_ground")
+					or unit.definition.has_tag(&"defense_air")
+				)
+			)
 	)
 	for turret in turrets:
 		_attach_turret(turret)
@@ -77,7 +77,7 @@ func _attach_turret(turret):
 
 func _enforce_number_of_ag_turrets():
 	var ag_turrets = get_tree().get_nodes_in_group("units").filter(
-		func(unit): return unit is AGTurret and unit.player == _player
+		func(unit): return unit.definition.has_tag(&"defense_ground") and unit.player == _player
 	)
 	if (
 		ag_turrets.size() + _number_of_pending_ag_turret_resource_requests
@@ -90,14 +90,14 @@ func _enforce_number_of_ag_turrets():
 	)
 	for _i in range(number_of_extra_ag_turrets_required):
 		resources_required.emit(
-			Constants.Match.Units.CONSTRUCTION_COSTS[AGTurretScene.resource_path], "ag_turret"
+			UnitCatalog.get_definition(&"anti_ground_turret").cost(), "ag_turret"
 		)
 		_number_of_pending_ag_turret_resource_requests += 1
 
 
 func _enforce_number_of_aa_turrets():
 	var aa_turrets = get_tree().get_nodes_in_group("units").filter(
-		func(unit): return unit is AATurret and unit.player == _player
+		func(unit): return unit.definition.has_tag(&"defense_air") and unit.player == _player
 	)
 	if (
 		aa_turrets.size() + _number_of_pending_aa_turret_resource_requests
@@ -109,22 +109,20 @@ func _enforce_number_of_aa_turrets():
 		- (aa_turrets.size() + _number_of_pending_aa_turret_resource_requests)
 	)
 	for _i in range(number_of_extra_aa_turrets_required):
-		resources_required.emit(
-			Constants.Match.Units.CONSTRUCTION_COSTS[AATurretScene.resource_path], "aa_turret"
-		)
+		resources_required.emit(UnitCatalog.get_definition(&"anti_air_turret").cost(), "aa_turret")
 		_number_of_pending_aa_turret_resource_requests += 1
 
 
-func _construct_turret(turret_scene):
-	var construction_cost = Constants.Match.Units.CONSTRUCTION_COSTS[turret_scene.resource_path]
+func _construct_turret(turret_id):
+	var construction_cost = UnitCatalog.get_definition(turret_id).cost()
 	assert(
 		_player.has_resources(construction_cost),
 		"player should have enough resources at this point"
 	)
 	var ccs = get_tree().get_nodes_in_group("units").filter(
-		func(unit): return unit is CommandCenter and unit.player == _player
+		func(unit): return unit.definition.has_tag(&"command_center") and unit.player == _player
 	)
-	var unit_to_spawn = turret_scene.instantiate()
+	var unit_to_spawn = UnitCatalog.instantiate(turret_id)
 	var match_node = find_parent("Match")
 	var target_basis = Utils.Match.StructureGrid.quantize_basis(
 		Transform3D(Basis(), Vector3.ZERO).looking_at(Vector3(0, 0, 1), Vector3.UP).basis
@@ -150,9 +148,9 @@ func _construct_turret(turret_scene):
 func _on_unit_died(unit):
 	if not is_inside_tree():
 		return
-	if unit is AGTurret:
+	if unit.definition.has_tag(&"defense_ground"):
 		_enforce_number_of_ag_turrets()
-	elif unit is AATurret:
+	elif unit.definition.has_tag(&"defense_air"):
 		_enforce_number_of_aa_turrets()
 	else:
 		assert(false, "unexpected flow")
@@ -161,7 +159,7 @@ func _on_unit_died(unit):
 func _on_unit_spawned(unit):
 	if unit.player != _player:
 		return
-	if unit is AGTurret or unit is AATurret:
+	if unit.definition.has_tag(&"defense_ground") or unit.definition.has_tag(&"defense_air"):
 		_attach_turret(unit)
 
 

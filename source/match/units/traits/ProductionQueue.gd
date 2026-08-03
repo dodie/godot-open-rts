@@ -42,20 +42,23 @@ func get_elements():
 	return _queue
 
 
-func produce(unit_prototype, ignore_limit = false):
-	if not ignore_limit and _queue.size() >= Constants.Match.Units.PRODUCTION_QUEUE_LIMIT:
+func produce(definition_id: StringName, ignore_limit = false):
+	var definition = UnitCatalog.get_definition(definition_id)
+	var queue_limit = _unit.definition.structure.get("queue_limit", 0)
+	if not ignore_limit and _queue.size() >= queue_limit:
 		return
-	var production_cost = Constants.Match.Units.PRODUCTION_COSTS[unit_prototype.resource_path]
+	var production_cost = definition.cost()
 	if not _unit.player.has_resources(production_cost):
 		MatchSignals.not_enough_resources_for_production.emit(_unit.player)
 		return
 	_unit.player.subtract_resources(production_cost)
 	var queue_element = ProductionQueueElement.new()
-	queue_element.unit_prototype = unit_prototype
-	queue_element.time_total = Constants.Match.Units.PRODUCTION_TIMES[unit_prototype.resource_path]
-	queue_element.time_left = Constants.Match.Units.PRODUCTION_TIMES[unit_prototype.resource_path]
+	queue_element.unit_prototype = definition_id
+	queue_element.time_total = definition.build["time"]
+	queue_element.time_left = definition.build["time"]
 	_enqueue_element(queue_element)
-	MatchSignals.unit_production_started.emit(unit_prototype, _unit)
+	MatchSignals.unit_production_started.emit(definition_id, _unit)
+	return queue_element
 
 
 func cancel_all():
@@ -66,9 +69,7 @@ func cancel_all():
 func cancel(element):
 	if not element in _queue:
 		return
-	var production_cost = Constants.Match.Units.PRODUCTION_COSTS[
-		element.unit_prototype.resource_path
-	]
+	var production_cost = UnitCatalog.get_definition(element.unit_prototype).cost()
 	_unit.player.add_resources(production_cost)
 	_remove_element(element)
 
@@ -84,7 +85,7 @@ func _remove_element(element):
 
 
 func _finalize_production(former_queue_element):
-	var produced_unit = former_queue_element.unit_prototype.instantiate()
+	var produced_unit = UnitCatalog.instantiate(former_queue_element.unit_prototype)
 	var placement_position = (
 		Utils
 		. Match

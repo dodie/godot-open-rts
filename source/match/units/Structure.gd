@@ -44,9 +44,7 @@ func construct(progress):
 
 
 func cancel_construction():
-	var scene_path = get_script().resource_path.replace(".gd", ".tscn")
-	var construction_cost = Constants.Match.Units.CONSTRUCTION_COSTS[scene_path]
-	player.add_resources(construction_cost)
+	player.add_resources(definition.cost())
 	queue_free()
 
 
@@ -71,6 +69,12 @@ func _finish_construction():
 	if is_inside_tree():
 		constructed.emit()
 		MatchSignals.unit_construction_finished.emit(self)
+
+
+func _setup_properties_from_definition():
+	super()
+	footprint_size = definition.structure["footprint"]
+	placement_rotation_degrees = definition.structure["placement_rotation_degrees"]
 
 
 func _change_geometry_material(material):

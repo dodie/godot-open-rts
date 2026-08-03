@@ -2,10 +2,6 @@ extends Node
 
 signal resources_required(resources, metadata)
 
-const CommandCenter = preload("res://source/match/units/CommandCenter.gd")
-const CommandCenterScene = preload("res://source/match/units/CommandCenter.tscn")
-const Worker = preload("res://source/match/units/Worker.gd")
-const WorkerScene = preload("res://source/match/units/Worker.tscn")
 const CollectingResourcesSequentially = preload(
 	"res://source/match/units/actions/CollectingResourcesSequentially.gd"
 )
@@ -33,17 +29,17 @@ func setup(player):
 func provision(resources, metadata):
 	if metadata == "worker":
 		assert(
-			resources == Constants.Match.Units.PRODUCTION_COSTS[WorkerScene.resource_path],
+			resources == UnitCatalog.get_definition(&"worker").cost(),
 			"unexpected amount of resources"
 		)
 		_number_of_pending_worker_resource_requests -= 1
 		if _ccs.is_empty():
 			return
-		if _ccs[0].production_queue.produce(WorkerScene, true) != null:
+		if _ccs[0].production_queue.produce(&"worker", true) != null:
 			_number_of_pending_workers += 1
 	elif metadata == "cc":
 		assert(
-			resources == Constants.Match.Units.CONSTRUCTION_COSTS[CommandCenterScene.resource_path],
+			resources == UnitCatalog.get_definition(&"command_center").cost(),
 			"unexpected amount of resources"
 		)
 		_number_of_pending_cc_resource_requests -= 1
@@ -61,7 +57,7 @@ func _attach_cc(cc):
 
 func _attach_current_ccs():
 	var ccs = get_tree().get_nodes_in_group("units").filter(
-		func(unit): return unit is CommandCenter and unit.player == _player
+		func(unit): return unit.definition.has_tag(&"command_center") and unit.player == _player
 	)
 	if not ccs.is_empty():
 		_cc_base_position = ccs[0].global_position
@@ -82,7 +78,7 @@ func _attach_worker(worker):
 
 func _attach_current_workers():
 	var workers = get_tree().get_nodes_in_group("units").filter(
-		func(unit): return unit is Worker and unit.player == _player
+		func(unit): return unit.definition.has_tag(&"worker") and unit.player == _player
 	)
 	for worker in workers:
 		_attach_worker(worker)
@@ -99,9 +95,7 @@ func _enforce_number_of_ccs():
 		- (_ccs.size() + _number_of_pending_cc_resource_requests + _number_of_pending_workers)
 	)
 	for _i in range(number_of_extra_ccs_required):
-		resources_required.emit(
-			Constants.Match.Units.CONSTRUCTION_COSTS[CommandCenterScene.resource_path], "cc"
-		)
+		resources_required.emit(UnitCatalog.get_definition(&"command_center").cost(), "cc")
 		_number_of_pending_cc_resource_requests += 1
 
 
@@ -116,21 +110,17 @@ func _enforce_number_of_workers():
 		- (_workers.size() + _number_of_pending_worker_resource_requests)
 	)
 	for _i in range(number_of_extra_workers_required):
-		resources_required.emit(
-			Constants.Match.Units.PRODUCTION_COSTS[WorkerScene.resource_path], "worker"
-		)
+		resources_required.emit(UnitCatalog.get_definition(&"worker").cost(), "worker")
 		_number_of_pending_worker_resource_requests += 1
 
 
 func _construct_cc():
-	var construction_cost = Constants.Match.Units.CONSTRUCTION_COSTS[
-		CommandCenterScene.resource_path
-	]
+	var construction_cost = UnitCatalog.get_definition(&"command_center").cost()
 	assert(
 		_player.has_resources(construction_cost),
 		"player should have enough resources at this point"
 	)
-	var unit_to_spawn = CommandCenterScene.instantiate()
+	var unit_to_spawn = UnitCatalog.instantiate(&"command_center")
 	var match_node = find_parent("Match")
 	var target_basis = Utils.Match.StructureGrid.quantize_basis(
 		Transform3D(Basis(), Vector3.ZERO).looking_at(Vector3(0, 0, 1), Vector3.UP).basis
@@ -230,11 +220,11 @@ func _on_worker_died(worker):
 func _on_unit_spawned(unit):
 	if unit.player != _player:
 		return
-	if unit is Worker:
+	if unit.definition.has_tag(&"worker"):
 		if _number_of_pending_workers > 0:
 			_number_of_pending_workers -= 1
 		_attach_worker(unit)
-	elif unit is CommandCenter:
+	elif unit.definition.has_tag(&"command_center"):
 		_attach_cc(unit)
 
 

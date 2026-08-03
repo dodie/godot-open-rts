@@ -1,31 +1,5 @@
 extends PanelContainer
 
-const UNIT_ICONS = {
-	"AircraftFactory": preload("res://assets/ui/icons/AircraftFactory.png"),
-	"AntiAirTurret": preload("res://assets/ui/icons/AntiAirTurret.png"),
-	"AntiGroundTurret": preload("res://assets/ui/icons/AntiGroundTurret.png"),
-	"CommandCenter": preload("res://assets/ui/icons/CommandCenter.png"),
-	"Drone": preload("res://assets/ui/icons/Drone.png"),
-	"Helicopter": preload("res://assets/ui/icons/Helicopter.png"),
-	"Launcher": preload("res://assets/ui/icons/Tank.png"),
-	"Tank": preload("res://assets/ui/icons/Tank.png"),
-	"VehicleFactory": preload("res://assets/ui/icons/VehicleFactory.png"),
-	"Worker": preload("res://assets/ui/icons/Worker.png"),
-}
-
-const UNIT_NAMES = {
-	"AircraftFactory": "Aircraft Factory",
-	"AntiAirTurret": "Anti-air Turret",
-	"AntiGroundTurret": "Anti-ground Turret",
-	"CommandCenter": "Command Center",
-	"Drone": "Drone",
-	"Helicopter": "Helicopter",
-	"Launcher": "Launcher",
-	"Tank": "Tank",
-	"VehicleFactory": "Vehicle Factory",
-	"Worker": "Worker",
-}
-
 var _observed_unit = null
 var _multiple_unit_health_connections = {}
 
@@ -67,8 +41,8 @@ func _show_single_unit(unit):
 	if not unit.hp_changed.is_connected(_update_single_unit_health):
 		unit.hp_changed.connect(_update_single_unit_health)
 
-	_unit_icon.texture = UNIT_ICONS.get(unit.type)
-	_unit_name.text = UNIT_NAMES.get(unit.type, unit.type)
+	_unit_icon.texture = load(unit.definition.icon_path)
+	_unit_name.text = unit.definition.display_name
 	_damage_value.text = "—" if unit.attack_damage == null else str(unit.attack_damage)
 	_update_single_unit_health()
 	_single_unit.show()
@@ -93,10 +67,10 @@ func _show_multiple_units(units):
 
 		var icon = TextureRect.new()
 		icon.custom_minimum_size = Vector2(42, 42)
-		icon.texture = UNIT_ICONS.get(unit.type)
+		icon.texture = load(unit.definition.icon_path)
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.tooltip_text = UNIT_NAMES.get(unit.type, unit.type)
+		icon.tooltip_text = unit.definition.display_name
 		icon.mouse_filter = Control.MOUSE_FILTER_PASS
 		unit_tile.add_child(icon)
 
