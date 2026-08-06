@@ -10,7 +10,7 @@ var _movement = null
 
 
 static func is_applicable(unit):
-	return unit.attack_range != null
+	return unit.find_child("Movement") != null
 
 
 func _ready():
@@ -31,6 +31,8 @@ func _exit_tree():
 
 func _look_for_target():
 	if _sub_action != null:
+		return
+	if _unit.attack_range == null:
 		return
 	var targets = get_tree().get_nodes_in_group("units").filter(
 		func(target):
