@@ -31,12 +31,15 @@ var _total_direction_in_the_low_pass_filter_window = Vector3.ZERO
 var _previously_set_global_transform_of_unit = null
 
 var _passive_movement_detected = false
+var _position_locked = false
 
 @onready var _match = find_parent("Match")
 @onready var _unit = get_parent()
 
 
 func _physics_process(delta):
+	if _position_locked:
+		return
 	_interim_speed = speed * delta
 	var fake_direction = _get_fake_direction_due_to_stuck_prevention()
 	if fake_direction != null:
@@ -73,6 +76,17 @@ func move(movement_target: Vector3):
 
 func stop():
 	target_position = Vector3.INF
+
+
+func lock_position():
+	_position_locked = true
+	target_position = _unit.global_position
+	set_velocity(Vector3.ZERO)
+
+
+func unlock_position():
+	_position_locked = false
+	stop()
 
 
 func _align_unit_position_to_navigation():
@@ -196,6 +210,8 @@ func _update_passive_movement_tracking(safe_velocity):
 
 
 func _on_velocity_computed(safe_velocity: Vector3):
+	if _position_locked:
+		return
 	_update_stuck_prevention(safe_velocity)
 	_rotate_in_direction(safe_velocity * Vector3(1, 0, 1))
 	_unit.global_transform.origin = _unit.global_transform.origin.move_toward(

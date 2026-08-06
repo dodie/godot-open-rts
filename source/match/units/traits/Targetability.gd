@@ -10,6 +10,7 @@ const RADIUS_DEVIATION_FACTOR = 0.1
 	set = _set_width
 
 var _tween = null
+var _command_targeting := false
 
 @onready var _unit = get_parent()
 @onready var _circle = find_child("Circle3D")
@@ -20,6 +21,7 @@ func _ready():
 	if Engine.is_editor_hint():
 		return
 	_unit.input_event.connect(_on_input_event)
+	MatchSignals.command_targeting_changed.connect(func(active): _command_targeting = active)
 	_circle.hide()
 
 
@@ -74,7 +76,10 @@ func _set_width(a_width):
 func _on_input_event(_camera, event, _click_position, _click_normal, _shape_idx):
 	if (
 		event is InputEventMouseButton
-		and event.button_index == MOUSE_BUTTON_RIGHT
+		and (
+			event.button_index == MOUSE_BUTTON_RIGHT
+			or (_command_targeting and event.button_index == MOUSE_BUTTON_LEFT)
+		)
 		and event.pressed
 	):
 		MatchSignals.unit_targeted.emit(_unit)

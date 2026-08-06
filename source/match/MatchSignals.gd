@@ -6,6 +6,9 @@ signal setup_and_spawn_unit(unit, transform, player)
 signal place_structure(structure_prototype)
 signal schedule_navigation_rebake(domain)
 signal navigate_unit_to_rally_point(unit, rally_point)  # currently, only for human players
+signal unit_command_requested(command)
+signal command_targeting_changed(active)
+signal command_target_requested(screen_position)
 
 # notifications
 signal match_started

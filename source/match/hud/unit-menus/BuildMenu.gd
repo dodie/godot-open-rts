@@ -1,5 +1,7 @@
 extends GridContainer
 
+signal back_requested
+
 const UnitDefinitionType = preload("res://source/match/units/UnitDefinition.gd")
 
 var unit = null:
@@ -7,6 +9,7 @@ var unit = null:
 		unit = value
 		if is_node_ready():
 			_rebuild()
+var show_back_button := false
 
 
 func _ready():
@@ -25,6 +28,11 @@ func _rebuild():
 			next_slot += 1
 		_add_button(definition)
 		next_slot += 1
+	if show_back_button:
+		while next_slot < 16:
+			_add_padding()
+			next_slot += 1
+		_add_back_button()
 
 
 func _add_padding():
@@ -47,6 +55,16 @@ func _add_button(definition):
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	button.add_child(icon)
 	button.pressed.connect(_build.bind(definition))
+	add_child(button)
+
+
+func _add_back_button():
+	var button = Button.new()
+	button.custom_minimum_size = Vector2(48, 48)
+	button.focus_mode = Control.FOCUS_NONE
+	button.tooltip_text = "Back to commands"
+	button.text = "↩"
+	button.pressed.connect(func(): back_requested.emit())
 	add_child(button)
 
 

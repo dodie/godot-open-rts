@@ -25,6 +25,7 @@ var _single_touch_start_position = Vector2.ZERO
 var _long_press_cancelled = false
 var _long_press_triggered = false
 var _last_touch_ended_as_tap = false
+var _command_targeting := false
 
 @onready var navigation = $Navigation
 @onready var fog_of_war = $FogOfWar
@@ -49,6 +50,22 @@ func _ready():
 	if settings.visibility == settings.Visibility.FULL:
 		fog_of_war.reveal()
 	MatchSignals.match_started.emit()
+	MatchSignals.command_targeting_changed.connect(_on_command_targeting_changed)
+
+
+func _input(event):
+	if (
+		_command_targeting
+		and event is InputEventMouseButton
+		and event.button_index == MOUSE_BUTTON_LEFT
+		and event.pressed
+	):
+		MatchSignals.command_target_requested.emit(event.position)
+		get_viewport().set_input_as_handled()
+
+
+func _on_command_targeting_changed(active: bool):
+	_command_targeting = active
 
 
 func _process(_delta):
