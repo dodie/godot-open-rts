@@ -67,6 +67,23 @@ func has_supply(amount: int) -> bool:
 	return population + amount <= max_supply
 
 
+func has_prerequisites(definition) -> bool:
+	for prerequisite_id in definition.prerequisites:
+		var is_satisfied := false
+		for unit in get_children():
+			if (
+				unit is Structure
+				and unit.definition != null
+				and unit.definition.id == prerequisite_id
+				and unit.is_constructed()
+			):
+				is_satisfied = true
+				break
+		if not is_satisfied:
+			return false
+	return true
+
+
 func reserve_supply(amount: int):
 	assert(has_supply(amount), "not enough supply")
 	_reserved_supply += amount

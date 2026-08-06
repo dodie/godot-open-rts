@@ -9,6 +9,7 @@ func _init():
 	behavior_path = "res://source/match/units/Helicopter.gd"
 	icon_path = "res://assets/ui/icons/Helicopter.png"
 	menu_order = 13
+	prerequisites = [&"armory"]
 	supply_cost = 2
 	hp_max = 10
 	sight_range = 8.0

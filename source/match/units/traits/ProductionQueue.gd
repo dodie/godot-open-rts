@@ -53,6 +53,8 @@ func get_elements():
 
 func produce(definition_id: StringName, ignore_limit = false):
 	var definition = UnitCatalog.get_definition(definition_id)
+	if not _unit.player.has_prerequisites(definition):
+		return
 	var queue_limit = _unit.definition.structure.get("queue_limit", 0)
 	if not ignore_limit and _queue.size() >= queue_limit:
 		return

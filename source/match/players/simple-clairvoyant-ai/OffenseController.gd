@@ -193,7 +193,8 @@ func _enforce_units_production(structure, type):
 	var number_of_pending_units = structure.production_queue.size()
 	if number_of_pending_units + _number_of_pending_unit_resource_requests.get(type, 0) == 0:
 		var choices = UnitCatalog.get_products(structure.definition.id).filter(
-			func(definition): return definition.has_attack()
+			func(definition):
+				return definition.has_attack() and _player.has_prerequisites(definition)
 		)
 		assert(not choices.is_empty(), "%s produces no combat units" % structure.definition.id)
 		var unit_definition = choices.pick_random()

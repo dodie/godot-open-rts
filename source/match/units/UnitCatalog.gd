@@ -3,6 +3,7 @@ extends Node
 const UnitDefinitionType = preload("res://source/match/units/UnitDefinition.gd")
 const DEFINITION_SCRIPTS := [
 	preload("res://content/units/AircraftFactory.gd"),
+	preload("res://content/units/Armory.gd"),
 	preload("res://content/units/AntiAirTurret.gd"),
 	preload("res://content/units/AntiGroundTurret.gd"),
 	preload("res://content/units/CommandCenter.gd"),
@@ -109,5 +110,10 @@ func _validate_definitions():
 			)
 			for amount in definition.cost().values():
 				assert(amount >= 0, "%s has a negative cost" % definition.id)
+		for prerequisite_id in definition.prerequisites:
+			assert(
+				_by_id.has(prerequisite_id),
+				"%s has an unknown prerequisite: %s" % [definition.id, prerequisite_id]
+			)
 		if definition.is_structure():
 			assert(ResourceLoader.exists(definition.structure["blueprint_path"]))

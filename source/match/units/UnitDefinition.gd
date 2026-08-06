@@ -11,6 +11,7 @@ var behavior_path := ""
 var icon_path := ""
 var menu_order := 0
 var tags: Array[StringName] = []
+var prerequisites: Array[StringName] = []
 
 var hp_max := 1
 var sight_range := 0.0
