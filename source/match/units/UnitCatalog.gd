@@ -1,7 +1,18 @@
 extends Node
 
 const UnitDefinitionType = preload("res://source/match/units/UnitDefinition.gd")
-const DEFINITIONS_PATH := "res://content/units"
+const DEFINITION_SCRIPTS := [
+	preload("res://content/units/AircraftFactory.gd"),
+	preload("res://content/units/AntiAirTurret.gd"),
+	preload("res://content/units/AntiGroundTurret.gd"),
+	preload("res://content/units/CommandCenter.gd"),
+	preload("res://content/units/Drone.gd"),
+	preload("res://content/units/Helicopter.gd"),
+	preload("res://content/units/Launcher.gd"),
+	preload("res://content/units/Tank.gd"),
+	preload("res://content/units/VehicleFactory.gd"),
+	preload("res://content/units/Worker.gd"),
+]
 
 var _by_id := {}
 var _by_scene_path := {}
@@ -54,13 +65,14 @@ func dependency_paths() -> Array:
 
 
 func _load_definitions():
-	var files := DirAccess.get_files_at(DEFINITIONS_PATH)
-	files.sort()
-	for file_name in files:
-		if not file_name.ends_with(".gd"):
-			continue
-		var definition = load(DEFINITIONS_PATH.path_join(file_name)).new()
-		assert(definition is UnitDefinitionType, "%s is not a UnitDefinition" % file_name)
+	# Runtime directory enumeration cannot reliably find remapped scripts in exported PCKs.
+	# Explicit references also let the exporter discover and include every definition.
+	for definition_script in DEFINITION_SCRIPTS:
+		var definition = definition_script.new()
+		assert(
+			definition is UnitDefinitionType,
+			"%s is not a UnitDefinition" % definition_script.resource_path
+		)
 		assert(not _by_id.has(definition.id), "Duplicate unit id: %s" % definition.id)
 		assert(
 			not _by_scene_path.has(definition.scene_path),
