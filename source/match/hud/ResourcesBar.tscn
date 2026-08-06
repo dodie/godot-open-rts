@@ -68,3 +68,17 @@ mouse_filter = 2
 custom_minimum_size = Vector2(50, 0)
 layout_mode = 2
 text = "0"
+
+[node name="Supply" type="HBoxContainer" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+tooltip_text = "Population / maximum supply"
+theme_override_constants/separation = 5
+
+[node name="Caption" type="Label" parent="MarginContainer/HBoxContainer/Supply"]
+layout_mode = 2
+text = "Supply:"
+
+[node name="SupplyLabel" type="Label" parent="MarginContainer/HBoxContainer/Supply"]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+text = "0/0"

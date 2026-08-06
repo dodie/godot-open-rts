@@ -10,6 +10,7 @@ func _init():
 	icon_path = "res://assets/ui/icons/Worker.png"
 	menu_order = 13
 	tags = [&"worker"]
+	supply_cost = 1
 	hp_max = 6
 	sight_range = 5.0
 	movement = {"domain": Constants.Match.Navigation.Domain.TERRAIN, "speed": 2.5, "radius": 0.6}

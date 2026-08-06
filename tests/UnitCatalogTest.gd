@@ -12,6 +12,11 @@ func _initialize():
 	assert(_ids(catalog.get_products(&"command_center")) == [&"worker"])
 	assert(_ids(catalog.get_products(&"vehicle_factory")) == [&"tank", &"launcher"])
 	assert(_ids(catalog.get_products(&"aircraft_factory")) == [&"helicopter", &"drone"])
+	assert(catalog.get_definition(&"command_center").supply_granted == 8)
+	for id in [&"worker", &"drone", &"launcher"]:
+		assert(catalog.get_definition(id).supply_cost == 1)
+	for id in [&"tank", &"helicopter"]:
+		assert(catalog.get_definition(id).supply_cost == 2)
 	assert(
 		(
 			_ids(catalog.get_products(&"worker"))

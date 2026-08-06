@@ -17,7 +17,7 @@ todo:
 	ack ' todo' -i source/
 
 test:
-	godot4 --headless --path . --script tests/UnitCatalogTest.gd
+	./test.sh
 
 release-linux:
 	godot4 --export-release "Linux/X11" "build/Open_RTS_$(version)_linux64.bin"

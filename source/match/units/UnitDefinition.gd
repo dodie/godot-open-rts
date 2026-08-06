@@ -19,6 +19,8 @@ var attack := {}
 var build := {"mode": BuildMode.NONE}
 var structure := {}
 var cargo := {}
+var supply_cost := 0
+var supply_granted := 0
 
 
 func has_attack() -> bool:

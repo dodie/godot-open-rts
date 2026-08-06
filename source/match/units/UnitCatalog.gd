@@ -93,6 +93,8 @@ func _validate_definitions():
 		)
 		assert(ResourceLoader.exists(definition.icon_path), "%s has no icon" % definition.id)
 		assert(definition.hp_max > 0, "%s has invalid health" % definition.id)
+		assert(definition.supply_cost >= 0, "%s has invalid supply cost" % definition.id)
+		assert(definition.supply_granted >= 0, "%s has invalid supplied capacity" % definition.id)
 		if definition.has_attack():
 			assert(definition.attack["damage"] > 0, "%s has invalid damage" % definition.id)
 			assert(

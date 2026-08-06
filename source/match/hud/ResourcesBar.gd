@@ -4,6 +4,7 @@ var player = null
 
 @onready var _resource_a_label = find_child("ResourceALabel")
 @onready var _resource_b_label = find_child("ResourceBLabel")
+@onready var _supply_label = find_child("SupplyLabel")
 @onready var _resource_a_color_rect = find_child("ResourceAColorRect")
 @onready var _resource_b_color_rect = find_child("ResourceBColorRect")
 
@@ -23,3 +24,4 @@ func setup(a_player):
 func _on_player_resource_changed():
 	_resource_a_label.text = str(player.resource_a)
 	_resource_b_label.text = str(player.resource_b)
+	_supply_label.text = "%d/%d" % [player.population, player.max_supply]

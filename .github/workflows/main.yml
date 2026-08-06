@@ -29,6 +29,9 @@ jobs:
           use-dotnet: false
           include-templates: true
 
+      - name: Run tests
+        run: ./test.sh
+
       - name: Export project for web
         run: ./export-web.sh
 

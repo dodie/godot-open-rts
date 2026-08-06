@@ -10,6 +10,7 @@ func _init():
 	icon_path = "res://assets/ui/icons/CommandCenter.png"
 	menu_order = 13
 	tags = [&"command_center"]
+	supply_granted = 8
 	hp_max = 20
 	sight_range = 10.0
 	movement = {"domain": Constants.Match.Navigation.Domain.TERRAIN, "speed": 0.0, "radius": 2.0}

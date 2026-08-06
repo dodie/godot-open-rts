@@ -10,6 +10,7 @@ class ProductionQueueElement:
 	extends Resource
 	var unit_prototype = null
 	var time_total = null
+	var reserved_supply := 0
 	var time_left = null:
 		set(value):
 			time_left = value
@@ -22,6 +23,14 @@ class ProductionQueueElement:
 var _queue = []
 
 @onready var _unit = get_parent()
+
+
+func _exit_tree():
+	# Losing a producer also removes its queue. Its resource cost stays lost, but
+	# its reserved population must become available again.
+	for element in _queue:
+		_unit.player.release_supply(element.reserved_supply)
+	_queue.clear()
 
 
 func _process(delta):
@@ -51,9 +60,14 @@ func produce(definition_id: StringName, ignore_limit = false):
 	if not _unit.player.has_resources(production_cost):
 		MatchSignals.not_enough_resources_for_production.emit(_unit.player)
 		return
+	if not _unit.player.has_supply(definition.supply_cost):
+		MatchSignals.not_enough_supply_for_production.emit(_unit.player)
+		return
 	_unit.player.subtract_resources(production_cost)
+	_unit.player.reserve_supply(definition.supply_cost)
 	var queue_element = ProductionQueueElement.new()
 	queue_element.unit_prototype = definition_id
+	queue_element.reserved_supply = definition.supply_cost
 	queue_element.time_total = definition.build["time"]
 	queue_element.time_left = definition.build["time"]
 	_enqueue_element(queue_element)
@@ -71,6 +85,7 @@ func cancel(element):
 		return
 	var production_cost = UnitCatalog.get_definition(element.unit_prototype).cost()
 	_unit.player.add_resources(production_cost)
+	_unit.player.release_supply(element.reserved_supply)
 	_remove_element(element)
 
 
@@ -107,6 +122,7 @@ func _finalize_production(former_queue_element):
 	MatchSignals.setup_and_spawn_unit.emit(
 		produced_unit, Transform3D(Basis(), placement_position), _unit.player
 	)
+	_unit.player.release_supply(former_queue_element.reserved_supply)
 	MatchSignals.unit_production_finished.emit(produced_unit, _unit)
 
 	var rally_point = _unit.find_child("RallyPoint")

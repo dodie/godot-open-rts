@@ -10,6 +10,7 @@ func _init():
 	icon_path = "res://assets/ui/icons/Drone.png"
 	menu_order = 14
 	tags = [&"scout"]
+	supply_cost = 1
 	hp_max = 6
 	sight_range = 10.0
 	movement = {"domain": Constants.Match.Navigation.Domain.AIR, "speed": 4.0, "radius": 0.6}

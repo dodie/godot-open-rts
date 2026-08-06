@@ -9,6 +9,7 @@ func _init():
 	behavior_path = "res://source/match/units/CombatUnit.gd"
 	icon_path = "res://assets/ui/icons/Tank.png"
 	menu_order = 13
+	supply_cost = 2
 	hp_max = 10
 	sight_range = 8.0
 	movement = {"domain": Constants.Match.Navigation.Domain.TERRAIN, "speed": 2.75, "radius": 0.9}
