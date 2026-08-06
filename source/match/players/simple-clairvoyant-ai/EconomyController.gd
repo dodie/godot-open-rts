@@ -5,6 +5,8 @@ signal resources_required(resources, metadata)
 const CollectingResourcesSequentially = preload(
 	"res://source/match/units/actions/CollectingResourcesSequentially.gd"
 )
+const MINIMUM_FREE_SUPPLY := 8
+const SUPPLY_CHECK_INTERVAL_S := 0.5
 
 var _player = null
 var _ccs = []
@@ -12,6 +14,7 @@ var _workers = []
 var _number_of_pending_cc_resource_requests = 0
 var _number_of_pending_worker_resource_requests = 0
 var _number_of_pending_workers = 0
+var _supply_farm_resource_request_pending := false
 var _cc_base_position = null
 
 @onready var _ai = get_parent()
@@ -19,11 +22,13 @@ var _cc_base_position = null
 
 func setup(player):
 	_player = player
+	_setup_supply_check_timer()
 	_attach_current_ccs()
 	_attach_current_workers()
 	MatchSignals.unit_spawned.connect(_on_unit_spawned)
 	_enforce_number_of_ccs()
 	_enforce_number_of_workers()
+	_enforce_free_supply()
 
 
 func provision(resources, metadata):
@@ -46,8 +51,43 @@ func provision(resources, metadata):
 		if _workers.is_empty():
 			return
 		_construct_cc()
+	elif metadata == "supply_farm":
+		assert(
+			resources == UnitCatalog.get_definition(&"supply_farm").cost(),
+			"unexpected amount of resources"
+		)
+		_supply_farm_resource_request_pending = false
+		if _workers.is_empty():
+			return
+		_construct_supply_farm()
 	else:
 		assert(false, "unexpected flow")
+
+
+func _setup_supply_check_timer():
+	var timer = Timer.new()
+	add_child(timer)
+	timer.timeout.connect(_enforce_free_supply)
+	timer.start(SUPPLY_CHECK_INTERVAL_S)
+
+
+func _enforce_free_supply():
+	if _player.max_supply - _player.population >= MINIMUM_FREE_SUPPLY:
+		return
+	if _supply_farm_resource_request_pending:
+		return
+	var supply_farm_under_construction = get_tree().get_nodes_in_group("units").any(
+		func(unit):
+			return (
+				unit.player == _player
+				and unit.definition.id == &"supply_farm"
+				and not unit.is_constructed()
+			)
+	)
+	if supply_farm_under_construction:
+		return
+	_supply_farm_resource_request_pending = true
+	resources_required.emit(UnitCatalog.get_definition(&"supply_farm").cost(), "supply_farm")
 
 
 func _attach_cc(cc):
@@ -138,6 +178,31 @@ func _construct_cc():
 	var target_transform = Transform3D(Basis(), placement_position).looking_at(
 		placement_position + Vector3(0, 0, 1), Vector3.UP
 	)
+	_player.subtract_resources(construction_cost)
+	MatchSignals.setup_and_spawn_unit.emit(unit_to_spawn, target_transform, _player)
+
+
+func _construct_supply_farm():
+	var definition = UnitCatalog.get_definition(&"supply_farm")
+	var construction_cost = definition.cost()
+	assert(
+		_player.has_resources(construction_cost),
+		"player should have enough resources at this point"
+	)
+	var unit_to_spawn = UnitCatalog.instantiate(definition.id)
+	var match_node = find_parent("Match")
+	var target_basis = Utils.Match.StructureGrid.quantize_basis(Basis())
+	var buildability_validator = match_node.map.is_structure_footprint_buildable.bind(
+		unit_to_spawn.footprint_size, target_basis
+	)
+	var placement_position = Utils.Match.Unit.Placement.find_valid_position_radially(
+		_cc_base_position if _cc_base_position != null else _workers[0].global_position,
+		unit_to_spawn.radius + Constants.Match.Units.EMPTY_SPACE_RADIUS_SURROUNDING_STRUCTURE_M,
+		match_node.navigation.get_navigation_map_rid_by_domain(unit_to_spawn.movement_domain),
+		get_tree(),
+		buildability_validator
+	)
+	var target_transform = Transform3D(target_basis, placement_position)
 	_player.subtract_resources(construction_cost)
 	MatchSignals.setup_and_spawn_unit.emit(unit_to_spawn, target_transform, _player)
 
