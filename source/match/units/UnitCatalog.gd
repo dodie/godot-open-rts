@@ -9,6 +9,7 @@ const DEFINITION_SCRIPTS := [
 	preload("res://content/units/Drone.gd"),
 	preload("res://content/units/Helicopter.gd"),
 	preload("res://content/units/Launcher.gd"),
+	preload("res://content/units/SupplyFarm.gd"),
 	preload("res://content/units/Tank.gd"),
 	preload("res://content/units/VehicleFactory.gd"),
 	preload("res://content/units/Worker.gd"),
