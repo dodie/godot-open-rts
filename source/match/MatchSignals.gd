@@ -15,7 +15,7 @@ signal match_started
 signal match_aborted
 signal match_finished_with_victory
 signal match_finished_with_defeat
-signal terrain_targeted(position)
+signal terrain_targeted(position, units_converge)
 signal unit_spawned(unit)
 signal unit_targeted(unit)
 signal unit_selected(unit)

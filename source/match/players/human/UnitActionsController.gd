@@ -30,7 +30,7 @@ func _ready():
 	MatchSignals.command_target_requested.connect(_on_command_target_requested)
 
 
-func _try_navigating_selected_units_towards_position(target_point):
+func _try_navigating_selected_units_towards_position(target_point, units_converge := false):
 	var terrain_units_to_move = get_tree().get_nodes_in_group("selected_units").filter(
 		func(unit):
 			return (
@@ -47,12 +47,17 @@ func _try_navigating_selected_units_towards_position(target_point):
 				and Actions.Moving.is_applicable(unit)
 			)
 	)
-	var new_unit_targets = Utils.Match.Unit.Movement.crowd_moved_to_new_pivot(
-		terrain_units_to_move, target_point
-	)
-	new_unit_targets += Utils.Match.Unit.Movement.crowd_moved_to_new_pivot(
-		air_units_to_move, target_point
-	)
+	var new_unit_targets = []
+	if units_converge:
+		for unit in terrain_units_to_move + air_units_to_move:
+			new_unit_targets.append([unit, target_point])
+	else:
+		new_unit_targets = Utils.Match.Unit.Movement.crowd_moved_to_new_pivot(
+			terrain_units_to_move, target_point
+		)
+		new_unit_targets += Utils.Match.Unit.Movement.crowd_moved_to_new_pivot(
+			air_units_to_move, target_point
+		)
 	for tuple in new_unit_targets:
 		var unit = tuple[0]
 		var new_target = tuple[1]
@@ -134,11 +139,11 @@ func _try_setting_rally_point_to_unit(unit, target_unit):
 	return true
 
 
-func _on_terrain_targeted(position):
+func _on_terrain_targeted(position, units_converge):
 	if _pending_command != &"":
 		_execute_terrain_command(position)
 		return
-	_try_navigating_selected_units_towards_position(position)
+	_try_navigating_selected_units_towards_position(position, units_converge)
 	_try_setting_rally_points(position)
 
 

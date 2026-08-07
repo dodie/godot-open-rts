@@ -22,6 +22,7 @@ var structure := {}
 var cargo := {}
 var supply_cost := 0
 var supply_granted := 0
+var flocking := false
 
 
 func has_attack() -> bool:

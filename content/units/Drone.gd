@@ -13,6 +13,7 @@ func _init():
 	supply_cost = 1
 	hp_max = 6
 	sight_range = 10.0
+	flocking = true
 	movement = {"domain": Constants.Match.Navigation.Domain.AIR, "speed": 4.0, "radius": 0.6}
 	build = {
 		"mode": BuildMode.PRODUCTION,

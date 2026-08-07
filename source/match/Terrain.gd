@@ -23,4 +23,5 @@ func _on_input_event(_camera, event, _click_position, _click_normal, _shape_idx)
 		and event.pressed
 	):
 		var target_point = get_viewport().get_camera_3d().get_ray_intersection(event.position)
-		MatchSignals.terrain_targeted.emit(target_point)
+		var units_converge = event.button_index == MOUSE_BUTTON_RIGHT and event.double_click
+		MatchSignals.terrain_targeted.emit(target_point, units_converge)

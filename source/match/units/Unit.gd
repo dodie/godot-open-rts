@@ -204,6 +204,8 @@ func _setup_properties_from_definition():
 		movement.radius = definition.movement["radius"]
 		if "speed" in movement:
 			movement.speed = definition.movement["speed"]
+		if "flocking" in movement:
+			movement.flocking = definition.flocking
 
 
 func _on_action_node_tree_exited(action_node):

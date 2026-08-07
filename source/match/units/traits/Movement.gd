@@ -17,8 +17,13 @@ const ROTATION_LOW_PASS_FILTER_VELOCITY_THRESHOLD = 0.01  # velocities below wil
 
 const PASSIVE_MOVEMENT_TRACKING_ENABLED = true
 
+# Flocking units ignore local avoidance while following a path. Once stopped,
+# they participate in avoidance again and gently separate if they overlap.
+const FLOCKING_DRIFT_SPEED = 0.75
+
 @export var domain = Constants.Match.Navigation.Domain.TERRAIN
 @export var speed: float = 4.0
+@export var flocking := false
 
 var _interim_speed: float = 0.0
 
@@ -32,6 +37,8 @@ var _previously_set_global_transform_of_unit = null
 
 var _passive_movement_detected = false
 var _position_locked = false
+var _avoidance_layers_when_stopped: int
+var _avoidance_mask_when_stopped: int
 
 @onready var _match = find_parent("Match")
 @onready var _unit = get_parent()
@@ -41,6 +48,7 @@ func _physics_process(delta):
 	if _position_locked:
 		return
 	_interim_speed = speed * delta
+	_update_flocking_avoidance()
 	var fake_direction = _get_fake_direction_due_to_stuck_prevention()
 	if fake_direction != null:
 		set_velocity(fake_direction * _interim_speed)
@@ -55,6 +63,8 @@ func _physics_process(delta):
 
 func _ready():
 	set_physics_process(false)
+	_avoidance_layers_when_stopped = avoidance_layers
+	_avoidance_mask_when_stopped = avoidance_mask
 	if _match.navigation == null:
 		await _match.ready
 	velocity_computed.connect(_on_velocity_computed)
@@ -72,10 +82,12 @@ func _ready():
 
 func move(movement_target: Vector3):
 	target_position = movement_target
+	_update_flocking_avoidance()
 
 
 func stop():
 	target_position = Vector3.INF
+	_update_flocking_avoidance()
 
 
 func lock_position():
@@ -87,6 +99,13 @@ func lock_position():
 func unlock_position():
 	_position_locked = false
 	stop()
+
+
+func _update_flocking_avoidance():
+	if flocking:
+		var stopped = not target_position.is_finite()
+		avoidance_layers = _avoidance_layers_when_stopped if stopped else 0
+		avoidance_mask = _avoidance_mask_when_stopped if stopped else 0
 
 
 func _align_unit_position_to_navigation():
@@ -214,8 +233,11 @@ func _on_velocity_computed(safe_velocity: Vector3):
 		return
 	_update_stuck_prevention(safe_velocity)
 	_rotate_in_direction(safe_velocity * Vector3(1, 0, 1))
+	var movement_step = _interim_speed
+	if flocking and not target_position.is_finite():
+		movement_step = minf(movement_step, FLOCKING_DRIFT_SPEED * get_physics_process_delta_time())
 	_unit.global_transform.origin = _unit.global_transform.origin.move_toward(
-		_unit.global_transform.origin + safe_velocity, _interim_speed
+		_unit.global_transform.origin + safe_velocity, movement_step
 	)
 	_previously_set_global_transform_of_unit = _unit.global_transform
 	_update_passive_movement_tracking(safe_velocity)
@@ -223,4 +245,5 @@ func _on_velocity_computed(safe_velocity: Vector3):
 
 func _on_navigation_finished():
 	target_position = Vector3.INF
+	_update_flocking_avoidance()
 	movement_finished.emit()

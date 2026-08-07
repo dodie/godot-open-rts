@@ -7,7 +7,7 @@ func _ready():
 	MatchSignals.terrain_targeted.connect(_on_terrain_targeted)
 
 
-func _on_terrain_targeted(target_position):
+func _on_terrain_targeted(target_position, _units_converge):
 	if (
 		get_tree()
 		. get_nodes_in_group("selected_units")

@@ -143,7 +143,7 @@ func _try_teleporting_camera_based_on_local_texture_rect_position(position_2d_wi
 	get_viewport().get_camera_3d().set_position_safely(world_position_3d)
 
 
-func _issue_movement_action(position_2d_within_texture_rect):
+func _issue_movement_action(position_2d_within_texture_rect, units_converge: bool):
 	var world_position_2d = _texture_rect_position_to_world_position(
 		position_2d_within_texture_rect
 	)
@@ -154,7 +154,7 @@ func _issue_movement_action(position_2d_within_texture_rect):
 	var target_point_on_colliding_surface = camera.get_ray_intersection(
 		camera.unproject_position(abstract_world_position_3d)
 	)
-	MatchSignals.terrain_targeted.emit(target_point_on_colliding_surface)
+	MatchSignals.terrain_targeted.emit(target_point_on_colliding_surface, units_converge)
 
 
 func _on_gui_input(event):
@@ -165,6 +165,6 @@ func _on_gui_input(event):
 		if not event.is_pressed() and event.button_index == MOUSE_BUTTON_LEFT:
 			_camera_movement_active = false
 		if event.is_pressed() and event.button_index == MOUSE_BUTTON_RIGHT:
-			_issue_movement_action(event.position)
+			_issue_movement_action(event.position, event.double_click)
 	elif event is InputEventMouseMotion and _camera_movement_active:
 		_try_teleporting_camera_based_on_local_texture_rect_position(event.position)
